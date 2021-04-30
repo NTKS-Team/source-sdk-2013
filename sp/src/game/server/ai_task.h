@@ -136,6 +136,10 @@ enum sharedtasks_e
 
 		TASK_GET_PATH_AWAY_FROM_BEST_SOUND,
 
+#ifdef MOD_NTKS
+		TASK_GET_PATH_AWAY_FROM_BULLET_IMPACT,
+#endif
+
 		// Set the implied goal for TASK_GET_PATH_TO_GOAL
 		TASK_SET_GOAL,
 
@@ -195,6 +199,10 @@ enum sharedtasks_e
 		// Store best sound position for later reference
 		TASK_STORE_BESTSOUND_IN_SAVEPOSITION,
 		TASK_STORE_BESTSOUND_REACTORIGIN_IN_SAVEPOSITION,
+
+#ifdef MOD_NTKS
+		TASK_STORE_BULLET_IMPACT_IN_SAVEPOSITION,
+#endif
 
 		TASK_REACT_TO_COMBAT_SOUND,
 
@@ -383,6 +391,10 @@ enum sharedtasks_e
 
 		// tries lateral cover first, then node cover
 		TASK_FIND_COVER_FROM_BEST_SOUND,
+
+#ifdef MOD_NTKS
+		TASK_FIND_COVER_FROM_BULLET_IMPACT,
+#endif
 
 		// tries lateral cover first, then node cover
 		TASK_FIND_COVER_FROM_ENEMY,

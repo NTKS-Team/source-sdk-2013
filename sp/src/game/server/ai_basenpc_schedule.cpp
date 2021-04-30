@@ -45,6 +45,13 @@ extern ConVar ai_use_think_optimizations;
 
 ConVar	ai_simulate_task_overtime( "ai_simulate_task_overtime", "0" );
 
+#ifdef MOD_NTKS
+// investigate combat sounds if near enough
+ConVar	sk_npc_combat_sound_investigation_distance( "sk_npc_combat_sound_investigation_distance", "600" );
+ConVar	sk_npc_bullet_sound_flee_distance( "sk_npc_bullet_sound_flee_distance", "120" );
+ConVar	sk_npc_player_sound_investigation_distance( "sk_npc_player_sound_investigation_distance", "400" );
+#endif
+
 #define MAX_TASKS_RUN 10
 
 struct TaskTimings
@@ -693,7 +700,7 @@ void CAI_BaseNPC::MaintainSchedule ( void )
 
 		if ( !GetCurSchedule() || GetCurSchedule()->NumTasks() == 0 )
 		{
-			CGMsg( 1, CON_GROUP_NPC_AI, "ERROR: Missing or invalid schedule!\n" );
+			CGMsg( 1, CON_GROUP_NPC_AI, "ERROR: %s schedule!\n", !GetCurSchedule() ? "Missing" : "Invalid" );
 			SetActivity ( ACT_IDLE );
 			return;
 		}
@@ -872,11 +879,11 @@ bool CAI_BaseNPC::FindCoverPosInRadius( CBaseEntity *pEntity, const Vector &goal
 	{
 		coverPos = goalPos;
 	}
-	else if ( !pTacticalServices->FindCoverPos( goalPos, enemyPos, enemyEyePos, 0, coverRadius * 0.5, &coverPos ) )
+	else if ( !pTacticalServices->FindCoverPos( goalPos, enemyPos, enemyEyePos, 0, coverRadius * 0.5f, &coverPos ) )
 	{
-		if ( !pTacticalServices->FindLateralCover( goalPos, enemyEyePos, 0, coverRadius * 0.5, 3, &coverPos ) )
+		if ( !pTacticalServices->FindLateralCover( goalPos, enemyEyePos, 0, coverRadius * 0.5f, 3, &coverPos ) )
 		{
-			if ( !pTacticalServices->FindCoverPos( goalPos, enemyPos, enemyEyePos, coverRadius * 0.5 - 0.1, coverRadius, &coverPos ) )
+			if ( !pTacticalServices->FindCoverPos( goalPos, enemyPos, enemyEyePos, coverRadius * 0.5f - 0.1, coverRadius, &coverPos ) )
 			{
 				pTacticalServices->FindLateralCover( goalPos, enemyEyePos, 0, coverRadius, 5, &coverPos );
 			}
@@ -895,11 +902,11 @@ bool CAI_BaseNPC::FindCoverPos( CSound *pSound, Vector *pResult )
 {
 	if ( !GetTacticalServices()->FindCoverPos( pSound->GetSoundReactOrigin(), 
 												pSound->GetSoundReactOrigin(), 
-												MIN( pSound->Volume(), 120.0 ), 
+												MIN( pSound->Volume(), 120.0f ),
 												CoverRadius(), 
 												pResult ) )
 	{
-		return GetTacticalServices()->FindLateralCover( pSound->GetSoundReactOrigin(), MIN( pSound->Volume(), 60.0 ), pResult );
+		return GetTacticalServices()->FindLateralCover( pSound->GetSoundReactOrigin(), MIN( pSound->Volume(), 60.0f ), pResult );
 	}
 
 	return true;
@@ -1346,6 +1353,24 @@ void CAI_BaseNPC::StartTask( const Task_t *pTask )
 		}
 		break;
 
+#ifdef MOD_NTKS
+	case TASK_STORE_BULLET_IMPACT_IN_SAVEPOSITION:
+		{
+			CSound *pBestSound = GetBestSound( SOUND_BULLET_IMPACT );
+			if ( pBestSound )
+			{
+				m_vSavePosition = pBestSound->GetSoundOrigin();
+				TaskComplete();
+			}
+			else
+			{
+				TaskFail("No bullet-impact sound!");
+				return;
+			}
+		}
+		break;
+#endif
+
 	case TASK_STORE_ENEMY_POSITION_IN_SAVEPOSITION:
 		if ( GetEnemy() != NULL )
 		{
@@ -1543,6 +1568,13 @@ void CAI_BaseNPC::StartTask( const Task_t *pTask )
 		{
 		}
 		break;
+
+#ifdef MOD_NTKS
+	case TASK_FIND_COVER_FROM_BULLET_IMPACT:
+		{
+		}
+		break;
+#endif
 
 	case TASK_FACE_HINTNODE:
 		
@@ -2533,6 +2565,24 @@ void CAI_BaseNPC::StartTask( const Task_t *pTask )
 		LockBestSound();
 		break;
 	}	
+	
+#ifdef MOD_NTKS
+	case TASK_GET_PATH_AWAY_FROM_BULLET_IMPACT:
+	{
+		CSound *pBestSound = GetBestSound( SOUND_BULLET_IMPACT );
+		if ( !pBestSound )
+		{
+			TaskFail("No bullet-impact sound!");
+			break;
+		}
+
+		GetMotor()->SetIdealYawToTarget( pBestSound->GetSoundOrigin() );
+		ChainStartTask( TASK_MOVE_AWAY_PATH, pTask->flTaskData );
+		UnlockBestSound();
+		*m_pLockedBestSound = *pBestSound;
+		break;
+	}	
+#endif
 	
 	case TASK_MOVE_AWAY_PATH:
 		{
@@ -3540,7 +3590,7 @@ void CAI_BaseNPC::RunTask( const Task_t *pTask )
 
 					CSound *pBestSound = GetBestSound();
 					if ( pBestSound )
-						goal.maxInitialSimplificationDist = pBestSound->Volume() * 0.5;
+						goal.maxInitialSimplificationDist = pBestSound->Volume() * 0.5f;
 
 					if ( GetNavigator()->SetGoal( goal ) )
 					{
@@ -3551,6 +3601,71 @@ void CAI_BaseNPC::RunTask( const Task_t *pTask )
 			}
 		}
 		break;
+
+#ifdef MOD_NTKS
+	case TASK_FIND_COVER_FROM_BULLET_IMPACT:
+		{
+			switch( GetTaskInterrupt() )
+			{
+			case 0:
+				{
+					CSound *pSound = GetBestSound( SOUND_BULLET_IMPACT );
+					if ( !pSound )
+					{
+						TaskFail("No bullet-impact sound!");
+					}
+					else
+					{
+						Vector dangerOrigin = pSound->GetSoundOrigin();
+#if 0
+						// pull the origin back a bit
+						Vector toDangerOriginator = pSound->GetSoundReactOrigin() - dangerOrigin;
+						toDangerOriginator.Normalize();
+						dangerOrigin += toDangerOriginator * 32.0f;
+#endif
+						//TODO: FindCoverPos( CBaseEntity* ) tries FindLateralCover() first
+						//      which is better?
+						if (
+							GetTacticalServices()->FindCoverPos(
+								pSound->GetSoundOrigin(),
+								pSound->GetSoundOrigin(),
+								MIN( pSound->Volume(), 60.0f ),
+								CoverRadius(),
+								&m_vInterruptSavePosition )
+							|| GetTacticalServices()->FindLateralCover( pSound->GetSoundOrigin(), MIN( pSound->Volume(), 60.0f ), &m_vInterruptSavePosition )
+						) {
+							GetNavigator()->IgnoreStoppingPath();
+							UnlockBestSound();
+							*m_pLockedBestSound = *pSound;
+							TaskInterrupt();
+						}
+						else
+						{
+							TaskFail(FAIL_NO_COVER);
+						}
+					}
+				}
+				break;
+
+			case 1:
+				{
+					AI_NavGoal_t goal(m_vInterruptSavePosition, ACT_RUN, AIN_HULL_TOLERANCE);
+
+					CSound *pBestSound = GetBestSound();
+					if ( pBestSound )
+						goal.maxInitialSimplificationDist = pBestSound->Volume() * 0.5f;
+
+					if ( GetNavigator()->SetGoal( goal ) )
+					{
+						//FIXME: ??
+						m_flMoveWaitFinished = gpGlobals->curtime + pTask->flTaskData;
+					}
+				}
+				break;
+			}
+		}
+		break;
+#endif
 
 	case TASK_FACE_HINTNODE:
 	case TASK_FACE_LASTPOSITION:
@@ -3758,6 +3873,9 @@ void CAI_BaseNPC::RunTask( const Task_t *pTask )
 		break;
 
 	case TASK_GET_PATH_AWAY_FROM_BEST_SOUND:
+#ifdef MOD_NTKS
+	case TASK_GET_PATH_AWAY_FROM_BULLET_IMPACT:
+#endif
 	{
 		ChainRunTask( TASK_MOVE_AWAY_PATH, pTask->flTaskData );
 		if ( GetNavigator()->IsGoalActive() )
@@ -4603,6 +4721,49 @@ int CAI_BaseNPC::SelectAlertSchedule()
 		return SCHED_ALERT_REACT_TO_COMBAT_SOUND;
 	}
 
+#ifdef MOD_NTKS
+	// investigate combat sounds if near enough
+	// TODO: lower willingness to investigate if low on health
+	if ( HasCondition ( COND_HEAR_COMBAT ) )
+	{
+		CSound *pSound = GetBestSound( SOUND_COMBAT );
+		if ( pSound )
+		{
+			float distance = sk_npc_combat_sound_investigation_distance.GetFloat();
+			if ( (pSound->GetSoundReactOrigin() - GetAbsOrigin()).LengthSqr() < distance * distance )
+			{
+				return SCHED_INVESTIGATE_SOUND;
+			}
+		}
+	}
+	if ( HasCondition ( COND_HEAR_PLAYER ) )
+	{
+		CSound *pSound = GetBestSound( SOUND_PLAYER );
+		float distance = sk_npc_player_sound_investigation_distance.GetFloat();
+		if (pSound && (pSound->GetSoundReactOrigin() - GetAbsOrigin()).LengthSqr() < distance * distance)
+		{
+			return SCHED_INVESTIGATE_SOUND;
+		}
+	}
+	if ( HasCondition ( COND_HEAR_BULLET_IMPACT ) )
+	{
+		CSound *pSound = GetBestSound( SOUND_BULLET_IMPACT );
+		if ( pSound )
+		{
+			float fleeDistance = sk_npc_bullet_sound_flee_distance.GetFloat();
+			float distanceToSoundSqr = (pSound->GetSoundOrigin() - GetAbsOrigin()).LengthSqr();
+			if ( distanceToSoundSqr < fleeDistance * fleeDistance )
+			{
+				return SCHED_TAKE_COVER_FROM_BULLET_IMPACT;
+			}
+			float distance = sk_npc_combat_sound_investigation_distance.GetFloat();
+			if ( distanceToSoundSqr < distance * distance )
+			{
+				return SCHED_INVESTIGATE_SOUND;
+			}
+		}
+	}
+#endif
 	if ( HasCondition ( COND_HEAR_DANGER ) ||
 			  HasCondition ( COND_HEAR_PLAYER ) ||
 			  HasCondition ( COND_HEAR_WORLD  ) ||
