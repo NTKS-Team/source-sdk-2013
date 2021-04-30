@@ -2407,8 +2407,12 @@ void CHL2_Player::SuitPower_Update( void )
 		{
 			if( SuitPower_IsDeviceActive(SuitDeviceSprint) )
 			{
-				if( !fabs(GetAbsVelocity().x) && !fabs(GetAbsVelocity().y) )
-				{
+				bool bIsStanding = !fabs(GetAbsVelocity().x) && !fabs(GetAbsVelocity().y);
+#ifdef MOD_NTKS
+				// don't drain while in air
+				bIsStanding |= ( GetFlags() & FL_ONGROUND );
+#endif
+				if ( bIsStanding ) {
 					// If player's not moving, don't drain sprint juice.
 					flPowerLoad -= SuitDeviceSprint.GetDeviceDrainRate();
 				}
