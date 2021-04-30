@@ -33,6 +33,10 @@ extern ConVar in_forceuser;
 #define VIEWMODEL_ANIMATION_PARITY_BITS 3
 #define SCREEN_OVERLAY_MATERIAL "vgui/screens/vgui_overlay"
 
+#ifdef MOD_NTKS
+ConVar cl_alternate_weapon_origin( "cl_alternate_weapon_origin", "0", FCVAR_REPLICATED | FCVAR_ARCHIVE );
+#endif
+
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
@@ -423,6 +427,17 @@ void CBaseViewModel::CalcViewModelView( CBasePlayer *owner, const Vector& eyePos
 	{
 		g_ClientVirtualReality.OverrideViewModelTransform( vmorigin, vmangles, pWeapon && pWeapon->ShouldUseLargeViewModelVROverride() );
 	}
+#ifdef MOD_NTKS
+	else if ( cl_alternate_weapon_origin.GetBool() )
+	{
+		Vector vForward, vRight, vUp;
+		AngleVectors( vmangles, &vForward, &vRight, &vUp );
+
+		vmorigin += vRight * -1.5f;
+		vmorigin += vForward * -1.0f;
+		vmorigin += vUp * -0.5f;
+	}
+#endif
 
 	SetLocalOrigin( vmorigin );
 	SetLocalAngles( vmangles );
@@ -471,19 +486,28 @@ void CBaseViewModel::CalcViewModelLag( Vector& origin, QAngle& angles, QAngle& o
 	Vector	forward;
 	AngleVectors( angles, &forward, NULL, NULL );
 
+	float maxViewModelLag  = g_fMaxViewModelLag;
+
 	if ( gpGlobals->frametime != 0.0f )
 	{
 		Vector vDifference;
 		VectorSubtract( forward, m_vecLastFacing, vDifference );
 
 		float flSpeed = 5.0f;
+#ifdef MOD_NTKS
+		if ( cl_alternate_weapon_origin.GetBool() )
+		{
+			flSpeed = 8.0f;
+			maxViewModelLag = 1.0f;
+		}
+#endif
 
 		// If we start to lag too far behind, we'll increase the "catch up" speed.  Solves the problem with fast cl_yawspeed, m_yaw or joysticks
 		//  rotating quickly.  The old code would slam lastfacing with origin causing the viewmodel to pop to a new position
 		float flDiff = vDifference.Length();
-		if ( (flDiff > g_fMaxViewModelLag) && (g_fMaxViewModelLag > 0.0f) )
+		if ( (flDiff > maxViewModelLag) && (maxViewModelLag > 0.0f) )
 		{
-			float flScale = flDiff / g_fMaxViewModelLag;
+			float flScale = flDiff / maxViewModelLag;
 			flSpeed *= flScale;
 		}
 
@@ -505,7 +529,7 @@ void CBaseViewModel::CalcViewModelLag( Vector& origin, QAngle& angles, QAngle& o
 	else if ( pitch < -180.0f )
 		pitch += 360.0f;
 
-	if ( g_fMaxViewModelLag == 0.0f )
+	if ( maxViewModelLag == 0.0f )
 	{
 		origin = vOriginalOrigin;
 		angles = vOriginalAngles;
