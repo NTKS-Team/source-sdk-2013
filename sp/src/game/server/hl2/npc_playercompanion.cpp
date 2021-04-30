@@ -687,6 +687,24 @@ CSound *CNPC_PlayerCompanion::GetBestSound( int validTypes )
 	return BaseClass::GetBestSound( validTypes );
 }
 
+#ifdef NTKS_DLL
+//-----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
+int CNPC_PlayerCompanion::GetSoundPriority( CSound *pSound )
+{
+	int iSoundTypeNoContext = pSound->SoundTypeNoContext();
+	if ( iSoundTypeNoContext & SOUND_COMBAT && !(iSoundTypeNoContext & SOUND_DANGER) )
+	{
+		if ( IRelationType( pSound->m_hOwner ) == D_LI )
+		{
+			return SOUND_PRIORITY_NORMAL; //_LOW?
+		}
+	}
+
+	return BaseClass::GetSoundPriority( pSound );
+}
+#endif
+
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
 bool CNPC_PlayerCompanion::QueryHearSound( CSound *pSound )

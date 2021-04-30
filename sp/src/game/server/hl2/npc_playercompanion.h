@@ -135,6 +135,9 @@ public:
 	void			BuildScheduleTestBits();
 
 	CSound			*GetBestSound( int validTypes = ALL_SOUNDS );
+#ifdef NTKS_DLL
+	virtual int		GetSoundPriority( CSound *pSound );
+#endif
 	bool			QueryHearSound( CSound *pSound );
 	bool			QuerySeeEntity( CBaseEntity *pEntity, bool bOnlyHateOrFearIfNPC = false );
 	bool			ShouldIgnoreSound( CSound * );
