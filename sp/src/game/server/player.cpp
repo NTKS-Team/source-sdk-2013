@@ -7730,6 +7730,18 @@ void CBasePlayer::Weapon_Equip( CBaseCombatWeapon *pWeapon )
 	bool bShouldSwitch = g_pGameRules->FShouldSwitchWeapon( this, pWeapon );
 #endif
 
+#ifdef MOD_NTKS
+	// prevent auto-switching weapons while reloading or in combat
+	CBaseCombatWeapon *pActiveWeapon = GetActiveWeapon();
+	if ( bShouldSwitch && pActiveWeapon )
+	{
+		bShouldSwitch = !pActiveWeapon->m_bInReload
+			&& (!pActiveWeapon->HasPrimaryAmmo() || gpGlobals->curtime > pActiveWeapon->m_flNextPrimaryAttack + 1.0f)
+			&& (!pActiveWeapon->HasSecondaryAmmo() || gpGlobals->curtime > pActiveWeapon->m_flNextSecondaryAttack + 1.0f)
+			;
+	}
+#endif
+
 #ifdef HL2_DLL
 	if ( bShouldSwitch == false && PhysCannonGetHeldEntity( GetActiveWeapon() ) == pWeapon && 
 		 Weapon_OwnsThisType( pWeapon->GetClassname(), pWeapon->GetSubType()) )
