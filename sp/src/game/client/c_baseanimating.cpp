@@ -3750,6 +3750,9 @@ bool C_BaseAnimating::DispatchMuzzleEffect( const char *options, bool isFirstPer
 		if ( Q_stricmp( token, "COMBINE" ) == 0 )
 		{
 			weaponType = MUZZLEFLASH_COMBINE;
+#ifdef MOD_NTKS
+			weaponType = MUZZLEFLASH_SMG1;
+#endif
 		}
 		else if ( Q_stricmp( token, "SMG1" ) == 0 )
 		{
