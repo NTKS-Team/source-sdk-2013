@@ -34,7 +34,7 @@ extern ConVar in_forceuser;
 #define SCREEN_OVERLAY_MATERIAL "vgui/screens/vgui_overlay"
 
 #ifdef MOD_NTKS
-ConVar cl_alternate_weapon_origin( "cl_alternate_weapon_origin", "0", FCVAR_REPLICATED | FCVAR_ARCHIVE );
+ConVar cl_alternate_weapon_origin( "cl_alternate_weapon_origin", "1", FCVAR_REPLICATED | FCVAR_ARCHIVE );
 #endif
 
 //-----------------------------------------------------------------------------
@@ -450,7 +450,7 @@ void CBaseViewModel::CalcViewModelView( CBasePlayer *owner, const Vector& eyePos
 
 		if ( cl_alternate_weapon_origin.GetBool() )
 		{
-			vecOffset += Vector( -1.0f, -1.5f, -0.5f ) * adjustBlend;
+			vecOffset += Vector( -0.4f, -1.2f, -0.1f ) * adjustBlend;
 		}
 
 		Vector vForward, vRight, vUp;

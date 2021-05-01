@@ -218,7 +218,7 @@ void CWeaponAR2::SecondaryAttack( void )
 	}
 	else
 	{
-		if ( !pPlayer->SetFOV( pPlayer, pPlayer->GetDefaultFOV() - 35, 0.2f ) )
+		if ( !pPlayer->SetFOV( pPlayer, pPlayer->GetDefaultFOV() - 33, 0.2f ) )
 		{
 			return;
 		}
@@ -298,7 +298,7 @@ void CWeaponAR2::GetViewModelOffset( Vector &vecOffset, QAngle &angOffset, float
 
 	//vecOffset = Vector( is_f.GetFloat(), is_r.GetFloat(), is_u.GetFloat() );
 	//angOffset = QAngle( is_p.GetFloat(), is_y.GetFloat(), is_l.GetFloat() );
-	vecOffset = Vector( 0.0f, -2.81f, 0.68f );
+	vecOffset = Vector( 0.0f, -2.808f, 0.659f );
 	angOffset = QAngle( 0, 0, 0 );
 }
 

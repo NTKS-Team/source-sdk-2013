@@ -36,7 +36,7 @@ public:
 
 		//vecOffset = Vector( is_f.GetFloat(), is_r.GetFloat(), is_u.GetFloat() );
 		//angOffset = QAngle( is_p.GetFloat(), is_y.GetFloat(), is_l.GetFloat() );
-		vecOffset = Vector( 0.0f, -2.81f, 0.68f );
+		vecOffset = Vector( 0.0f, -2.808f, 0.659f );
 		angOffset = QAngle( 0, 0, 0 );
 	}
 
@@ -66,7 +66,7 @@ void RecvProxy_IsIronsighting( const CRecvProxyData *pData, void *pStruct, void 
 		if ( state )
 		{
 			pPlayer->GetViewModel()->SetPlaybackRate( 0.0f );
-			pPlayer->SetFOV( pPlayer, pPlayer->GetDefaultFOV() - 35, 0.2f );
+			pPlayer->SetFOV( pPlayer, pPlayer->GetDefaultFOV() - 33, 0.2f );
 		}
 		else
 		{
