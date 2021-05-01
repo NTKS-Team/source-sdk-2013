@@ -255,9 +255,9 @@ bool CWeaponAR2::Holster( CBaseCombatWeapon *pSwitchingTo )
 	return true;
 }
 
-bool CWeaponAR2::DefaultReload( int iClipSize1, int iClipSize2, int iActivity )
+bool CWeaponAR2::Reload( void )
 {
-	if ( !BaseClass::DefaultReload( iClipSize1, iClipSize2, iActivity ) )
+	if ( !BaseClass::Reload() )
 	{
 		return false;
 	}

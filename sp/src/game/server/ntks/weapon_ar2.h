@@ -29,7 +29,7 @@ public:
 	void	SecondaryAttack( void );
 	void	DisableIronsights( void );
 	bool	Holster( CBaseCombatWeapon *pSwitchingTo );
-	bool	DefaultReload( int iClipSize1, int iClipSize2, int iActivity );
+	bool	Reload( void );
 	void	Drop( const Vector &vecVelocity );
 
 	void	GetViewModelOffset( Vector &vecOffset, QAngle &angOffset, float &blend );
