@@ -24,7 +24,6 @@
 extern ConVar sk_auto_reload_time;
 extern ConVar sk_plr_num_shotgun_pellets;
 #ifdef MAPBASE
-extern ConVar sk_plr_num_shotgun_pellets_double;
 extern ConVar sk_npc_num_shotgun_pellets;
 #endif
 
@@ -39,11 +38,12 @@ public:
 private:
 	bool	m_bNeedPump;		// When emptied completely
 	bool	m_bDelayedFire1;	// Fire primary when finished reloading
+	bool	m_bDelayedFire2;	// Fire secondary when finished reloading
 
 public:
 	void	Precache( void );
 
-	int CapabilitiesGet( void ) { return bits_CAP_WEAPON_RANGE_ATTACK1; }
+	int CapabilitiesGet( void ) { return bits_CAP_WEAPON_RANGE_ATTACK1 | bits_CAP_WEAPON_RANGE_ATTACK2; }
 
 	virtual const Vector& GetBulletSpread( void )
 	{
@@ -77,10 +77,12 @@ public:
 //	void WeaponIdle( void );
 	void ItemHolsterFrame( void );
 	void ItemPostFrame( void );
-	void PrimaryAttack( void );
+	void GenericAttack( bool bSlug );
 	void DryFire( void );
+	bool UsesSecondaryAmmo( void ) { return false; }
 
 	void FireNPCPrimaryAttack( CBaseCombatCharacter *pOperator, bool bUseWeaponAngles );
+	void FireNPCSecondaryAttack( CBaseCombatCharacter *pOperator, bool bUseWeaponAngles );
 	void Operator_ForceNPCFire( CBaseCombatCharacter  *pOperator, bool bSecondary );
 	void Operator_HandleAnimEvent( animevent_t *pEvent, CBaseCombatCharacter *pOperator );
 
@@ -99,6 +101,7 @@ BEGIN_DATADESC( CWeaponShotgun )
 
 	DEFINE_FIELD( m_bNeedPump, FIELD_BOOLEAN ),
 	DEFINE_FIELD( m_bDelayedFire1, FIELD_BOOLEAN ),
+	DEFINE_FIELD( m_bDelayedFire2, FIELD_BOOLEAN ),
 
 END_DATADESC()
 
@@ -183,11 +186,35 @@ void CWeaponShotgun::FireNPCPrimaryAttack( CBaseCombatCharacter *pOperator, bool
 		vecShootDir = npc->GetActualShootTrajectory( vecShootOrigin );
 	}
 
-#ifdef MAPBASE
 	pOperator->FireBullets( sk_npc_num_shotgun_pellets.GetInt(), vecShootOrigin, vecShootDir, GetBulletSpread(), MAX_TRACE_LENGTH, m_iPrimaryAmmoType, 0 );
-#else
-	pOperator->FireBullets( 8, vecShootOrigin, vecShootDir, GetBulletSpread(), MAX_TRACE_LENGTH, m_iPrimaryAmmoType, 0 );
-#endif
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+// Input  : *pOperator - 
+//-----------------------------------------------------------------------------
+void CWeaponShotgun::FireNPCSecondaryAttack( CBaseCombatCharacter *pOperator, bool bUseWeaponAngles )
+{
+	Vector vecShootOrigin, vecShootDir;
+	CAI_BaseNPC *npc = pOperator->MyNPCPointer();
+	ASSERT( npc != NULL );
+	WeaponSound( DOUBLE_NPC );
+	pOperator->DoMuzzleFlash();
+	m_iClip1 = m_iClip1 - 1;
+
+	if ( bUseWeaponAngles )
+	{
+		QAngle	angShootDir;
+		GetAttachment( LookupAttachment( "muzzle" ), vecShootOrigin, angShootDir );
+		AngleVectors( angShootDir, &vecShootDir );
+	}
+	else 
+	{
+		vecShootOrigin = pOperator->Weapon_ShootPosition();
+		vecShootDir = npc->GetActualShootTrajectory( vecShootOrigin );
+	}
+
+	pOperator->FireBullets( 1, vecShootOrigin, vecShootDir, VECTOR_CONE_2DEGREES, MAX_TRACE_LENGTH, m_iSecondaryAmmoType, 1 );
 }
 
 //-----------------------------------------------------------------------------
@@ -198,7 +225,14 @@ void CWeaponShotgun::Operator_ForceNPCFire( CBaseCombatCharacter *pOperator, boo
 	// Ensure we have enough rounds in the clip
 	m_iClip1++;
 
-	FireNPCPrimaryAttack( pOperator, true );
+	if ( bSecondary )
+	{
+		FireNPCSecondaryAttack( pOperator, true );
+	}
+	else
+	{
+		FireNPCPrimaryAttack( pOperator, true );
+	}
 }
 
 //-----------------------------------------------------------------------------
@@ -422,8 +456,8 @@ void CWeaponShotgun::Pump( void )
 	// Finish reload animation
 	SendWeaponAnim( ACT_SHOTGUN_PUMP );
 
-	pOwner->m_flNextAttack	= gpGlobals->curtime + SequenceDuration();
-	m_flNextPrimaryAttack	= gpGlobals->curtime + SequenceDuration();
+	pOwner->m_flNextAttack = gpGlobals->curtime + SequenceDuration();
+	m_flNextPrimaryAttack = gpGlobals->curtime + SequenceDuration();
 }
 
 //-----------------------------------------------------------------------------
@@ -444,7 +478,7 @@ void CWeaponShotgun::DryFire( void )
 //
 //
 //-----------------------------------------------------------------------------
-void CWeaponShotgun::PrimaryAttack( void )
+void CWeaponShotgun::GenericAttack( bool bSlug )
 {
 	// Only the player fires this way so we can cast
 	CBasePlayer *pPlayer = ToBasePlayer( GetOwner() );
@@ -455,7 +489,7 @@ void CWeaponShotgun::PrimaryAttack( void )
 	}
 
 	// MUST call sound before removing a round from the clip of a CMachineGun
-	WeaponSound(SINGLE);
+	WeaponSound( bSlug ? WPN_DOUBLE : SINGLE );
 
 	pPlayer->DoMuzzleFlash();
 
@@ -469,16 +503,23 @@ void CWeaponShotgun::PrimaryAttack( void )
 	m_iClip1 -= 1;
 
 	Vector	vecSrc		= pPlayer->Weapon_ShootPosition( );
-	Vector	vecAiming	= pPlayer->GetAutoaimVector( AUTOAIM_SCALE_DEFAULT );	
+	Vector	vecAiming	= pPlayer->GetAutoaimVector( AUTOAIM_SCALE_DEFAULT );
 
 	pPlayer->SetMuzzleFlashTime( gpGlobals->curtime + 1.0 );
-	
-	// Fire the bullets, and force the first shot to be perfectly accuracy
-	pPlayer->FireBullets( sk_plr_num_shotgun_pellets.GetInt(), vecSrc, vecAiming, GetBulletSpread(), MAX_TRACE_LENGTH, m_iPrimaryAmmoType, 0, -1, -1, 0, NULL, true, true );
-	
+
+	if ( bSlug )
+	{
+		pPlayer->FireBullets( 1, vecSrc, vecAiming, VECTOR_CONE_2DEGREES, MAX_TRACE_LENGTH, m_iSecondaryAmmoType, 1, -1, -1, 0, NULL, false, false );
+	}
+	else
+	{
+		// Fire the bullets, and force the first shot to be perfectly accuracy
+		pPlayer->FireBullets( sk_plr_num_shotgun_pellets.GetInt(), vecSrc, vecAiming, GetBulletSpread(), MAX_TRACE_LENGTH, m_iPrimaryAmmoType, 0, -1, -1, 0, NULL, true, true );
+	}
+
 	pPlayer->ViewPunch( QAngle( random->RandomFloat( -2, -1 ), random->RandomFloat( -2, 2 ), 0 ) );
 
-	CSoundEnt::InsertSound( SOUND_COMBAT, GetAbsOrigin(), SOUNDENT_VOLUME_SHOTGUN, 0.2, GetOwner() );
+	CSoundEnt::InsertSound( SOUND_COMBAT, GetAbsOrigin(), SOUNDENT_VOLUME_SHOTGUN, 0.2f, GetOwner() );
 
 	if (!m_iClip1 && pPlayer->GetAmmoCount(m_iPrimaryAmmoType) <= 0)
 	{
@@ -492,7 +533,14 @@ void CWeaponShotgun::PrimaryAttack( void )
 		m_bNeedPump = true;
 	}
 
-	m_iPrimaryAttacks++;
+	if ( bSlug )
+	{
+		m_iSecondaryAttacks++;
+	}
+	else
+	{
+		m_iPrimaryAttacks++;
+	}
 	gamestats->Event_WeaponFired( pPlayer, true, GetClassname() );
 }
 
@@ -510,16 +558,20 @@ void CWeaponShotgun::ItemPostFrame( void )
 	if (m_bInReload)
 	{
 		// If I'm primary firing and have one round stop reloading and fire
-		if ((pOwner->m_nButtons & IN_ATTACK ) && (m_iClip1 >=1))
+		if ( m_iClip1 >= 1 )
 		{
-			m_bInReload		= false;
-			m_bNeedPump		= false;
-			m_bDelayedFire1 = true;
+			m_bDelayedFire1 = pOwner->m_nButtons & IN_ATTACK;
+			m_bDelayedFire2 = pOwner->m_nButtons & IN_ATTACK2;
+		}
+		if ( m_bDelayedFire1 || m_bDelayedFire2 )
+		{
+			m_bInReload = false;
+			m_bNeedPump = false;
 		}
 		else if (m_flNextPrimaryAttack <= gpGlobals->curtime)
 		{
 			// If out of ammo end reload
-			if (pOwner->GetAmmoCount(m_iPrimaryAmmoType) <=0)
+			if (pOwner->GetAmmoCount(m_iPrimaryAmmoType) <= 0)
 			{
 				FinishReload();
 				return;
@@ -550,36 +602,48 @@ void CWeaponShotgun::ItemPostFrame( void )
 		return;
 	}
 	
-	if ( (m_bDelayedFire1 || pOwner->m_nButtons & IN_ATTACK) && m_flNextPrimaryAttack <= gpGlobals->curtime)
+	if ( m_flNextPrimaryAttack <= gpGlobals->curtime )
 	{
-		m_bDelayedFire1 = false;
-		if ( (m_iClip1 <= 0 && UsesClipsForAmmo1()) || ( !UsesClipsForAmmo1() && !pOwner->GetAmmoCount(m_iPrimaryAmmoType) ) )
+		if ( m_bDelayedFire1 )
 		{
-			if (!pOwner->GetAmmoCount(m_iPrimaryAmmoType))
+			pOwner->m_nButtons |= IN_ATTACK;
+			m_bDelayedFire1 = false;
+		}
+		if ( m_bDelayedFire2 )
+		{
+			pOwner->m_nButtons |= IN_ATTACK2;
+			m_bDelayedFire2 = false;
+		}
+		if ( pOwner->m_nButtons & ( IN_ATTACK | IN_ATTACK2 ) )
+		{
+			if ( (m_iClip1 <= 0 && UsesClipsForAmmo1()) || ( !UsesClipsForAmmo1() && !pOwner->GetAmmoCount(m_iPrimaryAmmoType) ) )
 			{
-				DryFire();
+				if (!pOwner->GetAmmoCount(m_iPrimaryAmmoType))
+				{
+					DryFire();
+				}
+				else
+				{
+					StartReload();
+				}
+			}
+			// Fire underwater?
+			else if (pOwner->GetWaterLevel() == 3 && m_bFiresUnderwater == false)
+			{
+				WeaponSound(EMPTY);
+				m_flNextPrimaryAttack = gpGlobals->curtime + 0.2f;
+				return;
 			}
 			else
 			{
-				StartReload();
+				// If the firing button was just pressed, reset the firing time
+				CBasePlayer *pPlayer = ToBasePlayer( GetOwner() );
+				if ( pPlayer && pPlayer->m_afButtonPressed & ( IN_ATTACK | IN_ATTACK2 ) )
+				{
+					 m_flNextPrimaryAttack = gpGlobals->curtime;
+				}
+				GenericAttack( !( pOwner->m_nButtons & IN_ATTACK ) );
 			}
-		}
-		// Fire underwater?
-		else if (pOwner->GetWaterLevel() == 3 && m_bFiresUnderwater == false)
-		{
-			WeaponSound(EMPTY);
-			m_flNextPrimaryAttack = gpGlobals->curtime + 0.2;
-			return;
-		}
-		else
-		{
-			// If the firing button was just pressed, reset the firing time
-			CBasePlayer *pPlayer = ToBasePlayer( GetOwner() );
-			if ( pPlayer && pPlayer->m_afButtonPressed & IN_ATTACK )
-			{
-				 m_flNextPrimaryAttack = gpGlobals->curtime;
-			}
-			PrimaryAttack();
 		}
 	}
 
@@ -632,9 +696,12 @@ CWeaponShotgun::CWeaponShotgun( void )
 
 	m_bNeedPump		= false;
 	m_bDelayedFire1 = false;
+	m_bDelayedFire2 = false;
 
 	m_fMinRange1		= 0.0;
 	m_fMaxRange1		= 500;
+	m_fMinRange1		= 0.0;
+	m_fMaxRange1		= 1500;
 }
 
 //-----------------------------------------------------------------------------
