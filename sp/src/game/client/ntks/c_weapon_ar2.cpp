@@ -40,6 +40,15 @@ public:
 		angOffset = QAngle( 0, 0, 0 );
 	}
 
+	void ViewModelDrawn( C_BaseViewModel *pViewModel )
+	{
+		BaseClass::ViewModelDrawn( pViewModel );
+		if ( m_bIsIronsighting )
+		{
+			pViewModel->SetPlaybackRate( pViewModel->GetSequence() == 0 ? 0.0f : 1.0f );
+		}
+	}
+
 private:
 	CNetworkVar( bool, m_bIsIronsighting );
 	CNetworkVar( float, m_flIronsightTime );
@@ -56,10 +65,12 @@ void RecvProxy_IsIronsighting( const CRecvProxyData *pData, void *pStruct, void 
 	{
 		if ( state )
 		{
+			pPlayer->GetViewModel()->SetPlaybackRate( 0.0f );
 			pPlayer->SetFOV( pPlayer, pPlayer->GetDefaultFOV() - 35, 0.2f );
 		}
 		else
 		{
+			pPlayer->GetViewModel()->SetPlaybackRate( 1.0f );
 			pPlayer->SetFOV( pPlayer, pPlayer->GetDefaultFOV(), 0.2f );
 		}
 	}
