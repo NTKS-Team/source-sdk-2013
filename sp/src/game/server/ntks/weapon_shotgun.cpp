@@ -560,8 +560,8 @@ void CWeaponShotgun::ItemPostFrame( void )
 		// If I'm primary firing and have one round stop reloading and fire
 		if ( m_iClip1 >= 1 )
 		{
-			m_bDelayedFire1 = pOwner->m_nButtons & IN_ATTACK;
-			m_bDelayedFire2 = pOwner->m_nButtons & IN_ATTACK2;
+			m_bDelayedFire1 = ( pOwner->m_nButtons & IN_ATTACK ) != 0;
+			m_bDelayedFire2 = ( pOwner->m_nButtons & IN_ATTACK2 ) != 0;
 		}
 		if ( m_bDelayedFire1 || m_bDelayedFire2 )
 		{
