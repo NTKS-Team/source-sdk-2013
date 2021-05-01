@@ -1,0 +1,177 @@
+// ==========
+// SMG1 Entries
+// ==========
+
+
+
+
+
+
+// =====
+// Player
+// =====
+
+"Weapon_SMG1.Fire"
+{
+	"channel"			"CHAN_STATIC"
+	"volume"			"0.8"
+	"pitch"				"97,103"
+	"soundlevel"		"SNDLVL_TALKING"
+
+	"rndwave"
+	{
+		"wave"			"weapon/smg1/smg1_fire_player_01.wav"
+		"wave"			"weapon/smg1/smg1_fire_player_02.wav"
+		"wave"			"weapon/smg1/smg1_fire_player_03.wav"
+		"wave"			"weapon/smg1/smg1_fire_player_04.wav"
+		"wave"			"weapon/smg1/smg1_fire_player_05.wav"
+		"wave"			"weapon/smg1/smg1_fire_player_06.wav"
+		"wave"			"weapon/smg1/smg1_fire_player_07.wav"
+		"wave"			"weapon/smg1/smg1_fire_player_08.wav"
+		"wave"			"weapon/smg1/smg1_fire_player_09.wav"
+		"wave"			"weapon/smg1/smg1_fire_player_10.wav"
+		"wave"			"weapon/smg1/smg1_fire_player_11.wav"
+		"wave"			"weapon/smg1/smg1_fire_player_12.wav"
+	}
+}
+
+"Weapon_SMG1.Dryfire"
+{
+	"channel"			"CHAN_STATIC"
+	"volume"			"0.5"
+	"pitch"				"130"
+	"soundlevel"		"SNDLVL_NORM"
+	
+	"rndwave"
+	{
+		"wave"			"weapon/OICW/handling/OICW_dryfire_01.wav"
+		"wave"			"weapon/OICW/handling/OICW_dryfire_02.wav"
+		"wave"			"weapon/OICW/handling/OICW_dryfire_03.wav"
+	}
+}
+
+
+
+// =====
+// Reload
+// =====
+
+"Weapon_SMG1.Mag_Release"
+{
+	"channel"			"CHAN_STATIC"
+	"volume"			"0.5"
+	"pitch"				"130"
+	"soundlevel"		"SNDLVL_NORM"
+
+	"rndwave"
+	{
+		"wave"			"weapon/oicw/handling/oicw_mag_release_01.wav"
+		"wave"			"weapon/oicw/handling/oicw_mag_release_02.wav"
+		"wave"			"weapon/oicw/handling/oicw_mag_release_03.wav"
+	}
+}
+
+"Weapon_SMG1.Mag_Out"
+{
+	"channel"			"CHAN_STATIC"
+	"volume"			"0.5"
+	"pitch"				"130"
+	"soundlevel"		"SNDLVL_NORM"
+
+	"rndwave"
+	{
+		"wave"			"weapon/oicw/handling/oicw_mag_out_01.wav"
+		"wave"			"weapon/oicw/handling/oicw_mag_out_02.wav"
+		"wave"			"weapon/oicw/handling/oicw_mag_out_03.wav"
+	}
+}
+
+"Weapon_SMG1.Mag_Futz"
+{
+	"channel"			"CHAN_STATIC"
+	"volume"			"0.5"
+	"pitch"				"130"
+	"soundlevel"		"SNDLVL_NORM"
+
+	"rndwave"
+	{
+		"wave"			"weapon/oicw/handling/oicw_mag_futz_01.wav"
+		"wave"			"weapon/oicw/handling/oicw_mag_futz_02.wav"
+		"wave"			"weapon/oicw/handling/oicw_mag_futz_03.wav"
+	}
+}
+
+"Weapon_SMG1.Mag_In"
+{
+	"channel"			"CHAN_STATIC"
+	"volume"			"0.5"
+	"pitch"				"130"
+	"soundlevel"		"SNDLVL_NORM"
+
+	"rndwave"
+	{
+		"wave"			"weapon/oicw/handling/oicw_mag_in_01.wav"
+		"wave"			"weapon/oicw/handling/oicw_mag_in_02.wav"
+		"wave"			"weapon/oicw/handling/oicw_mag_in_03.wav"
+	}
+}
+
+"Weapon_SMG1.Bolt_Release"
+{
+	"channel"			"CHAN_STATIC"
+	"volume"			"0.5"
+	"pitch"				"97,103"
+	"soundlevel"		"SNDLVL_NORM"
+
+	"rndwave"
+	{
+		"wave"			"weapon/smg1/handling/smg1_bolt_release_01.wav"
+		"wave"			"weapon/smg1/handling/smg1_bolt_release_02.wav"
+		"wave"			"weapon/smg1/handling/smg1_bolt_release_03.wav"
+	}
+}
+
+
+
+// ==========
+// Non-Player
+// ==========
+
+"Weapon_SMG1.NPC_Fire"
+{
+	"channel"			"CHAN_WEAPON"
+	"volume"			"0.75"
+	"pitch"				"97,103"
+	"soundlevel"		"SNDLVL_GUNFIRE"
+
+	"rndwave"
+	{
+		"wave"			")weapon/smg1/smg1_fire_player_01.wav"
+		"wave"			")weapon/smg1/smg1_fire_player_02.wav"
+		"wave"			")weapon/smg1/smg1_fire_player_03.wav"
+		"wave"			")weapon/smg1/smg1_fire_player_04.wav"
+		"wave"			")weapon/smg1/smg1_fire_player_05.wav"
+		"wave"			")weapon/smg1/smg1_fire_player_06.wav"
+		"wave"			")weapon/smg1/smg1_fire_player_07.wav"
+		"wave"			")weapon/smg1/smg1_fire_player_08.wav"
+		"wave"			")weapon/smg1/smg1_fire_player_09.wav"
+		"wave"			")weapon/smg1/smg1_fire_player_10.wav"
+		"wave"			")weapon/smg1/smg1_fire_player_11.wav"
+		"wave"			")weapon/smg1/smg1_fire_player_12.wav"
+	}
+}
+
+"Weapon_SMG1.NPC_Reload"
+{
+	"channel"			"CHAN_ITEM"
+	"volume"			"0.5"
+	"pitch"				"130"
+	"soundlevel"		"SNDLVL_NORM"
+
+	"rndwave"
+	{
+		"wave"			"weapon/oicw/handling/oicw_mag_out_01.wav"
+		"wave"			"weapon/oicw/handling/oicw_mag_out_02.wav"
+		"wave"			"weapon/oicw/handling/oicw_mag_out_03.wav"
+	}
+}

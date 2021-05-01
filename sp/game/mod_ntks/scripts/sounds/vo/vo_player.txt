@@ -1,0 +1,361 @@
+// ==================
+// First Person Definitions
+// ==================
+
+// ============
+// The Artifact
+// ============
+
+// Isaac's Lines
+
+"isaac.youdothis"
+{
+	"channel"			"CHAN_VOICE2"
+	"volume"			"VOL_NORM"
+	"pitch"				"PITCH_NORM"
+	"soundlevel"		"SNDLVL_TALKING"	
+
+	"wave"				"*vo\isaac\01\youdothis.wav"
+}
+
+"isaac.listenman"
+{
+	"channel"			"CHAN_VOICE2"
+	"volume"			"VOL_NORM"
+	"pitch"				"PITCH_NORM"
+	"soundlevel"		"SNDLVL_TALKING"	
+
+	"wave"				"*vo\isaac\01\listenman.wav"
+}
+
+"isaac.trustmemore"
+{
+	"channel"			"CHAN_VOICE2"
+	"volume"			"VOL_NORM"
+	"pitch"				"PITCH_NORM"
+	"soundlevel"		"SNDLVL_TALKING"	
+
+	"wave"				"*vo\isaac\01\trustmemore.wav"
+}
+
+"isaac.noregularmeteorite"
+{
+	"channel"			"CHAN_VOICE2"
+	"volume"			"VOL_NORM"
+	"pitch"				"PITCH_NORM"
+	"soundlevel"		"SNDLVL_TALKING"	
+
+	"wave"				"*vo\isaac\01\noregularmeteorite.wav"
+}
+
+"isaac.elevatorlocked"
+{
+	"channel"			"CHAN_VOICE2"
+	"volume"			"VOL_NORM"
+	"pitch"				"PITCH_NORM"
+	"soundlevel"		"SNDLVL_TALKING"	
+
+	"wave"				"*vo\isaac\01\elevatorlocked.wav"
+}
+
+"isaac.anotherwaydown"
+{
+	"channel"			"CHAN_VOICE2"
+	"volume"			"VOL_NORM"
+	"pitch"				"PITCH_NORM"
+	"soundlevel"		"SNDLVL_TALKING"	
+
+	"wave"				"*vo\isaac\01\anotherwaydown.wav"
+}
+
+"isaac.fuckit"
+{
+	"channel"			"CHAN_VOICE2"
+	"volume"			"VOL_NORM"
+	"pitch"				"PITCH_NORM"
+	"soundlevel"		"SNDLVL_TALKING"	
+
+	"wave"				"*vo\isaac\01\fuckit.wav"
+}
+
+"isaac.jump"
+{
+	"channel"			"CHAN_VOICE2"
+	"volume"			"VOL_NORM"
+	"pitch"				"PITCH_NORM"
+	"soundlevel"		"SNDLVL_TALKING"	
+
+	"wave"				"*vo\isaac\01\grunt1.wav"
+}
+
+"isaac.catch"
+{
+	"channel"			"CHAN_VOICE2"
+	"volume"			"VOL_NORM"
+	"pitch"				"PITCH_NORM"
+	"soundlevel"		"SNDLVL_TALKING"	
+
+	"wave"				"*vo\isaac\01\grunt2.wav"
+}
+
+"isaac.land"
+{
+	"channel"			"CHAN_VOICE2"
+	"volume"			"VOL_NORM"
+	"pitch"				"PITCH_NORM"
+	"soundlevel"		"SNDLVL_TALKING"	
+
+	"wave"				"*vo\isaac\01\grunt3.wav"
+}
+
+"isaac.callkatsu"
+{
+	"channel"			"CHAN_VOICE2"
+	"volume"			"VOL_NORM"
+	"pitch"				"PITCH_NORM"
+	"soundlevel"		"SNDLVL_TALKING"	
+
+	"wave"				"*vo\isaac\01\bettercallkatsu.wav"
+}
+
+"isaac.reallyshouldhave"
+{
+	"channel"			"CHAN_VOICE2"
+	"volume"			"VOL_NORM"
+	"pitch"				"PITCH_NORM"
+	"soundlevel"		"SNDLVL_TALKING"	
+
+	"wave"				"*vo\isaac\01\reallyshouldhave.wav"
+}
+
+"isaac.whereami"
+{
+	"channel"			"CHAN_VOICE2"
+	"volume"			"VOL_NORM"
+	"pitch"				"PITCH_NORM"
+	"soundlevel"		"SNDLVL_TALKING"	
+
+	"wave"				"*vo\isaac\01\whereami.wav"
+}
+	
+"isaac.rhetoricalquestion"
+{
+	"channel"			"CHAN_VOICE2"
+	"volume"			"VOL_NORM"
+	"pitch"				"PITCH_NORM"
+	"soundlevel"		"SNDLVL_TALKING"	
+
+	"wave"				"*vo\isaac\01\rhetoricalquestion.wav"
+}
+
+"isaac.findmyway"
+{
+	"channel"			"CHAN_VOICE2"
+	"volume"			"VOL_NORM"
+	"pitch"				"PITCH_NORM"
+	"soundlevel"		"SNDLVL_TALKING"	
+
+	"wave"				"*vo\isaac\01\findmyway.wav"
+}
+
+"isaac.thinkimhere"
+{
+	"channel"			"CHAN_VOICE2"
+	"volume"			"VOL_NORM"
+	"pitch"				"PITCH_NORM"
+	"soundlevel"		"SNDLVL_TALKING"	
+
+	"wave"				"*vo\isaac\01\thinkimhere.wav"
+}
+
+"isaac.reallyisadump"
+{
+	"channel"			"CHAN_VOICE2"
+	"volume"			"VOL_NORM"
+	"pitch"				"PITCH_NORM"
+	"soundlevel"		"SNDLVL_TALKING"	
+
+	"wave"				"*vo\isaac\01\reallyisadump.wav"
+}
+
+"isaac.startlookingaround"
+{
+	"channel"			"CHAN_VOICE2"
+	"volume"			"VOL_NORM"
+	"pitch"				"PITCH_NORM"
+	"soundlevel"		"SNDLVL_TALKING"	
+
+	"wave"				"*vo\isaac\01\startlookingaround.wav"
+}
+
+"isaac.gettocanalstakeroofs"
+{
+	"channel"			"CHAN_VOICE2"
+	"volume"			"VOL_NORM"
+	"pitch"				"PITCH_NORM"
+	"soundlevel"		"SNDLVL_TALKING"	
+
+	"wave"				"*vo\isaac\05\gettocanalstakeroofs.wav"
+}
+
+"isaac.isaaclv5intro"
+{
+	"channel"			"CHAN_VOICE2"
+	"volume"			"VOL_NORM"
+	"pitch"				"PITCH_NORM"
+	"soundlevel"		"SNDLVL_TALKING"	
+
+	"wave"				"*vo\isaac\05\isaaclv5intro.wav"
+}
+
+"isaac.meetmehideout"
+{
+	"channel"			"CHAN_VOICE2"
+	"volume"			"VOL_NORM"
+	"pitch"				"PITCH_NORM"
+	"soundlevel"		"SNDLVL_TALKING"	
+
+	"wave"				"*vo\isaac\05\meetmehideout.wav"
+}
+
+"isaac.stayonline"
+{
+	"channel"			"CHAN_VOICE2"
+	"volume"			"VOL_NORM"
+	"pitch"				"PITCH_NORM"
+	"soundlevel"		"SNDLVL_TALKING"	
+
+	"wave"				"*vo\isaac\05\stayonline.wav"
+}
+	
+// Katsu's Lines
+
+"katsu.stilldontget"
+{
+	"channel"			"CHAN_VOICE2"
+	"volume"			"VOL_NORM"
+	"pitch"				"PITCH_NORM"
+	"soundlevel"		"SNDLVL_TALKING"	
+
+	"wave"				"*vo\katsu\01\stilldontget.wav"
+}
+
+"katsu.fuckinggeologist"
+{
+	"channel"			"CHAN_VOICE2"
+	"volume"			"VOL_NORM"
+	"pitch"				"PITCH_NORM"
+	"soundlevel"		"SNDLVL_TALKING"	
+
+	"wave"				"*vo\katsu\01\fuckinggeologist.wav"
+}
+
+"katsu.rockfromspace"
+{
+	"channel"			"CHAN_VOICE2"
+	"volume"			"VOL_NORM"
+	"pitch"				"PITCH_NORM"
+	"soundlevel"		"SNDLVL_TALKING"	
+
+	"wave"				"*vo\katsu\01\rockfromspace.wav"
+}
+
+"katsu.notsurewantedto"
+{
+	"channel"			"CHAN_VOICE2"
+	"volume"			"VOL_NORM"
+	"pitch"				"PITCH_NORM"
+	"soundlevel"		"SNDLVL_TALKING"	
+
+	"wave"				"*vo\katsu\01\notsurewantedto.wav"
+}
+
+"katsu.notaugmented"
+{
+	"channel"			"CHAN_VOICE2"
+	"volume"			"VOL_NORM"
+	"pitch"				"PITCH_NORM"
+	"soundlevel"		"SNDLVL_TALKING"	
+
+	"wave"				"*vo\katsu\01\notaugmented.wav"
+}
+
+"katsu.richmannaturalbody1"
+{
+	"channel"			"CHAN_VOICE2"
+	"volume"			"VOL_NORM"
+	"pitch"				"PITCH_NORM"
+	"soundlevel"		"SNDLVL_TALKING"	
+
+	"wave"				"*vo\katsu\01\richmannaturalbody1.wav"
+}
+
+"katsu.richmannaturalbody2"
+{
+	"channel"			"CHAN_VOICE2"
+	"volume"			"VOL_NORM"
+	"pitch"				"PITCH_NORM"
+	"soundlevel"		"SNDLVL_TALKING"	
+
+	"wave"				"*vo\katsu\01\richmannaturalbody2.wav"
+}
+
+"katsu.anythingittakes"
+{
+	"channel"			"CHAN_VOICE2"
+	"volume"			"VOL_NORM"
+	"pitch"				"PITCH_NORM"
+	"soundlevel"		"SNDLVL_TALKING"	
+
+	"wave"				"*vo\katsu\01\anythingittakes.wav"
+}
+
+"katsu.dropeverythingnleave"
+{
+	"channel"			"CHAN_VOICE2"
+	"volume"			"VOL_NORM"
+	"pitch"				"PITCH_NORM"
+	"soundlevel"		"SNDLVL_TALKING"	
+
+	"wave"				"*vo\katsu\05\dropeverythingnleave.wav"
+}
+
+"katsu.herealready"
+{
+	"channel"			"CHAN_VOICE2"
+	"volume"			"VOL_NORM"
+	"pitch"				"PITCH_NORM"
+	"soundlevel"		"SNDLVL_TALKING"	
+
+	"wave"				"*vo\katsu\05\herealready.wav"
+}
+
+"katsu.heyguys"
+{
+	"channel"			"CHAN_VOICE2"
+	"volume"			"VOL_NORM"
+	"pitch"				"PITCH_NORM"
+	"soundlevel"		"SNDLVL_TALKING"	
+
+	"wave"				"*vo\katsu\05\heyguys.wav"
+}
+
+"katsu.isaac"
+{
+	"channel"			"CHAN_VOICE2"
+	"volume"			"VOL_NORM"
+	"pitch"				"PITCH_NORM"
+	"soundlevel"		"SNDLVL_TALKING"	
+
+	"wave"				"*vo\katsu\05\isaac.wav"
+}
+
+"katsu.okwherego"
+{
+	"channel"			"CHAN_VOICE2"
+	"volume"			"VOL_NORM"
+	"pitch"				"PITCH_NORM"
+	"soundlevel"		"SNDLVL_TALKING"	
+
+	"wave"				"*vo\katsu\05\okwherego.wav"
+}

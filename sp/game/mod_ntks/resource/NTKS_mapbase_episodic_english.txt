@@ -1,0 +1,17 @@
+"lang" 
+{ 
+	"Language" "English"
+	"Tokens"
+	{ 
+		"NTKS_mapbase_episodic_Chapter1_Title"	"The Artifact"
+		"NTKS_mapbase_episodic_Chapter2_Title"	"1199"
+		"NTKS_mapbase_episodic_Chapter3_Title"	"Steel Blizzard"
+
+		"valve_hint_alt_weapon_pistol"	"%+attack2% Burst fire"
+		"valve_hint_alt_weapon_ar2"		"%+attack2% Iron sights"
+		"valve_hint_alt_weapon_shotgun"	"%+attack2% Slug round"
+	}
+
+	"hl2_AmmoFull"					"FULL"
+	"HL2_Saved"						"Saved..."
+}

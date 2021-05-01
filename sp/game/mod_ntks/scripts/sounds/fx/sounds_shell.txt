@@ -1,0 +1,84 @@
+"Bounce.ShotgunShell"
+{
+	"pitch"			"PITCH_NORM"
+	"volume"		"1.0"
+	"soundlevel"	"SNDLVL_60dB"
+	"channel"		"CHAN_STATIC"
+	
+	"rndwave"
+	{
+		"wave" 		"^fx/cartridge/cartridge_shotgun_01.wav"
+		"wave" 		"^fx/cartridge/cartridge_shotgun_02.wav"
+		"wave" 		"^fx/cartridge/cartridge_shotgun_03.wav"
+		"wave" 		"^fx/cartridge/cartridge_shotgun_04.wav"
+		"wave" 		"^fx/cartridge/cartridge_shotgun_05.wav"
+		"wave" 		"^fx/cartridge/cartridge_shotgun_06.wav"
+	}
+}
+
+"Bounce.Shell"
+{
+	"pitch"			"PITCH_NORM"
+	"volume"		"1.0"
+	"soundlevel"	"SNDLVL_60dB"
+	"channel"		"CHAN_STATIC"
+	
+	"rndwave"
+	{
+		"wave" 		"^fx/cartridge/cartridge_9mm_01.wav"
+		"wave" 		"^fx/cartridge/cartridge_9mm_02.wav"
+		"wave" 		"^fx/cartridge/cartridge_9mm_03.wav"
+		"wave" 		"^fx/cartridge/cartridge_9mm_04.wav"
+		"wave" 		"^fx/cartridge/cartridge_9mm_05.wav"
+		"wave" 		"^fx/cartridge/cartridge_9mm_06.wav"
+	}
+}
+
+"Bounce.FlareShell"
+{
+	"pitch"			"PITCH_NORM"
+	"volume"		"1.0"
+	"soundlevel"	"SNDLVL_60dB"
+	"channel"		"CHAN_STATIC"
+	
+	"rndwave"
+	{
+		"wave"		"^fx/cartridge/cartridge_flare_01.wav"
+	}
+}
+
+"Bounce.RifleShell"
+{
+	"pitch"			"PITCH_NORM"
+	"volume"		"1.0"
+	"soundlevel"	"SNDLVL_60dB"
+	"channel"		"CHAN_STATIC"
+	
+	"rndwave"
+	{
+		"wave"		"^fx/cartridge/cartridge_556_01.wav"
+		"wave"		"^fx/cartridge/cartridge_556_02.wav"
+		"wave"		"^fx/cartridge/cartridge_556_03.wav"
+		"wave"		"^fx/cartridge/cartridge_556_04.wav"
+		"wave"		"^fx/cartridge/cartridge_556_05.wav"
+		"wave"		"^fx/cartridge/cartridge_556_06.wav"
+	}
+}
+
+"Bounce.RevolverShell"
+{
+	"pitch"			"PITCH_NORM"
+	"volume"		"1.0"
+	"soundlevel"	"SNDLVL_60dB"
+	"channel"		"CHAN_STATIC"
+	
+	"rndwave"
+	{
+		"wave"		"^fx/cartridge/cartridge_357_01.wav"
+		"wave"		"^fx/cartridge/cartridge_357_02.wav"
+		"wave"		"^fx/cartridge/cartridge_357_03.wav"
+		"wave"		"^fx/cartridge/cartridge_357_04.wav"
+		"wave"		"^fx/cartridge/cartridge_357_05.wav"
+		"wave"		"^fx/cartridge/cartridge_357_06.wav"
+	}
+}

@@ -1,0 +1,460 @@
+// ===============
+// Suit Warning Entries
+// ===============
+
+"HUDQuickInfo.LowHealth"
+{
+	"channel"		"CHAN_ITEM"
+	"volume"		"0.75"
+	"pitch"			"PITCH_NORM"
+	"soundlevel"	"SNDLVL_NONE"
+
+	"wave"			"common/warning.wav"
+}
+
+"HUDQuickInfo.LowAmmo"
+{
+	"channel"		"CHAN_ITEM"
+	"volume"		"0.75"
+	"pitch"			"PITCH_NORM"
+	"soundlevel"	"SNDLVL_NONE"
+
+	"wave"			"common/warning.wav"
+}
+
+"HudChat.Message"
+{
+	"channel"		"CHAN_ITEM"
+	"volume"		"0.75"
+	"soundlevel"  	"SNDLVL_NONE"
+	"pitch"			"PITCH_NORM"
+
+	"wave"			"common/talk.wav"
+}
+
+"Player.DenyWeaponSelection"
+{
+	"channel"		"CHAN_ITEM"
+	"volume"		"0.32"
+	"soundlevel"  	"SNDLVL_NONE"
+	"pitch"			"PITCH_NORM"
+
+	"wave"			"common/wpn_denyselect.wav"
+}
+
+"Player.WeaponSelected"
+{
+	"channel"		"CHAN_ITEM"
+	"volume"		"0.32"
+	"soundlevel"	"SNDLVL_NONE"
+	"pitch"			"PITCH_NORM"
+
+	"wave"			"common/wpn_select.wav"
+}
+
+"Player.WeaponSelectionMoveSlot"
+{
+	"channel"		"CHAN_ITEM"
+	"volume"		"0.32"
+	"soundlevel"  	"SNDLVL_NONE"
+	"pitch"			"PITCH_NORM"
+
+	"wave"			"common/wpn_moveselect.wav"
+}
+
+"Player.WeaponSelectionOpen"
+{
+	"channel"		"CHAN_ITEM"
+	"volume"		"0.32"
+	"soundlevel"  	"SNDLVL_NONE"
+	"pitch"			"PITCH_NORM"
+
+	"wave"			"common/wpn_hudon.wav"
+}
+
+"Player.WeaponSelectionClose"
+{
+	"channel"		"CHAN_ITEM"
+	"volume"		"0.32"
+	"soundlevel" 	"SNDLVL_NONE"
+	"pitch"			"PITCH_NORM"
+
+	"wave"			"common/wpn_hudoff.wav"
+}
+
+"BaseCombatCharacter.AmmoPickup"
+{
+	"channel"		"CHAN_ITEM"
+	"volume"		"1"
+	"soundlevel"  	"SNDLVL_75dB"
+
+	"rndwave"
+	{
+		"wave"		"ui/hud/hud_ammo_collect_01.wav"
+		"wave"		"ui/hud/hud_ammo_collect_02.wav"
+		"wave"		"ui/hud/hud_ammo_collect_03.wav"
+		"wave"		"ui/hud/hud_ammo_collect_04.wav"
+		"wave"		"ui/hud/hud_ammo_collect_05.wav"
+		"wave"		"ui/hud/hud_ammo_collect_06.wav"
+		"wave"		"ui/hud/hud_ammo_collect_07.wav"
+		"wave"		"ui/hud/hud_ammo_collect_08.wav"
+		"wave"		"ui/hud/hud_ammo_collect_09.wav"
+		"wave"		"ui/hud/hud_ammo_collect_10.wav"
+		"wave"		"ui/hud/hud_ammo_collect_11.wav"
+		"wave"		"ui/hud/hud_ammo_collect_12.wav"
+	}
+}
+
+"ItemBattery.Touch"
+{
+	"channel"		"CHAN_ITEM"
+	"volume"		"1"
+	"soundlevel" 	"SNDLVL_75dB"
+
+	"wave"			"items/battery_pickup.wav"
+}
+
+"HealthKit.Touch"
+{
+	"channel"		"CHAN_ITEM"
+	"volume"		"1"
+	"soundlevel"  	"SNDLVL_75dB"
+
+	"wave"			"items/smallmedkit1.wav"
+}
+
+"HealthVial.Touch"
+{
+	"channel"		"CHAN_ITEM"
+	"volume"		"1"
+	"soundlevel"  	"SNDLVL_75dB"
+
+	"wave"			"items/smallmedkit1.wav"
+}
+
+"HL2Player.SprintNoPower"
+{
+	"channel"		"CHAN_VOICE"
+	"volume"		"0.8"
+	"soundlevel"  	"SNDLVL_60dB"
+
+	"wave"			"player/suit_denydevice.wav"
+}
+
+"HL2Player.SprintStart"
+{
+	"channel"		"CHAN_VOICE"
+	"volume"		"0.9"
+	"soundlevel" 	"SNDLVL_60dB"
+
+	"wave"			"player/suit_sprint.wav"
+}
+
+"HL2Player.FlashLightOn"
+{
+	"channel"		"CHAN_WEAPON"
+	"volume"		"0.8"
+	"soundlevel"    "SNDLVL_75dB"
+	"pitch"			"PITCH_NORM"
+
+	"wave" 			"items/flashlight1.wav"
+}
+
+"HL2Player.FlashLightOff"
+{
+	"channel"		"CHAN_WEAPON"
+	"volume"		"0.8"
+	"soundlevel"  	"SNDLVL_75dB"
+	"pitch"			"PITCH_NORM"
+
+	"wave" 			"items/flashlight1.wav"
+}
+
+"HL2Player.PickupWeapon"
+{
+	"channel"		"CHAN_ITEM"
+	"volume"		"0.8"
+	"soundlevel"  	"SNDLVL_75dB"
+
+	"wave"			"items/ammo_pickup.wav"
+}
+
+"HL2Player.TrainUse"
+{
+	"channel"		"CHAN_ITEM"
+	"volume"		"0.8"
+	"soundlevel"  	"SNDLVL_75dB"
+
+	"wave"			"plats/train_use1.wav"
+}
+
+"HL2Player.Use"
+{
+	"channel"		"CHAN_ITEM"
+	"volume"		"0.4"
+	"soundlevel"  	"SNDLVL_75dB"
+
+	"wave"			"common/wpn_select.wav"
+}
+
+"HL2Player.UseNPC"
+{
+	"channel"		"CHAN_ITEM"
+	"volume"		"0.4"
+	"soundlevel"  	"SNDLVL_75dB"
+
+	"wave"			"common/wpn_select.wav"
+}
+
+"HL2Player.UseDeny"
+{
+	"channel"		"CHAN_ITEM"
+	"volume"		"0.4"
+	"soundlevel"  	"SNDLVL_75dB"
+
+	"wave"			"common/wpn_denyselect.wav"
+}
+
+"HL2Player.BurnPain"
+{
+	"channel"		"CHAN_VOICE"
+	"volume"		"0.5"
+	"soundlevel"  	"SNDLVL_75dB"
+
+	"rndwave"
+	{
+		"wave"		"player/pl_burnpain1.wav"
+		"wave"		"player/pl_burnpain2.wav"
+		"wave"		"player/pl_burnpain3.wav"
+	}
+}
+
+"Player.Death"
+{
+	"channel"		"CHAN_VOICE"
+	"volume"		"0.8"
+	"soundlevel"  	"SNDLVL_75dB"
+
+	"rndwave"
+	{
+		"wave"		"player/pl_pain5.wav"
+		"wave"		"player/pl_pain6.wav"
+		"wave"		"player/pl_pain7.wav"
+	}
+}
+
+"Player.PlasmaDamage"
+{
+	"channel"		"CHAN_BODY"
+	"volume"		"0.5"
+	"soundlevel"  	"SNDLVL_75dB"
+
+	"wave"			"player/general/flesh_burn.wav"
+}
+
+"Player.SonicDamage"
+{
+	"channel"		"CHAN_BODY"
+	"volume"		"0.7"
+	"soundlevel"  	"SNDLVL_75dB"
+
+	"rndwave"
+	{
+		"wave"		"player/pl_pain5.wav"
+		"wave"		"player/pl_pain6.wav"
+		"wave"		"player/pl_pain7.wav"
+	}
+}
+
+"Player.DrownStart"
+{
+	"channel"		"CHAN_VOICE"
+	"volume"		"1.0"
+	"soundlevel"  	"SNDLVL_75dB"
+	"pitch"			"90,110"
+
+	"wave"			"player/pl_drown1.wav"
+}
+
+"Player.Swim"
+{
+	"channel"		"CHAN_STATIC"
+	"volume"		"0.5"
+	"pitch"			"PITCH_NORM"
+	"soundlevel"	"SNDLVL_NORM"
+
+	"rndwave"
+	{
+		"wave"		"player/footsteps/wade5.wav"
+		"wave"		"player/footsteps/wade6.wav"
+		"wave"		"player/footsteps/wade7.wav"
+		"wave"		"player/footsteps/wade8.wav"
+	}
+}
+
+"Player.FallDamage"
+{
+	"channel"		"CHAN_AUTO"
+	"volume"		"0.75"
+	"pitch"			"90,110"
+	"soundlevel"	"SNDLVL_NORM"
+
+	"rndwave"
+	{
+		"wave"		"player/pl_fallpain1.wav"
+		"wave"		"player/pl_fallpain3.wav"
+	}
+}
+
+"Player.FallGib"
+{
+	"channel"		"CHAN_ITEM"
+	"volume"		"0.75"
+	"pitch"			"90,110"
+	"soundlevel"	"SNDLVL_NORM"
+
+	"rndwave"
+	{
+		"wave"		"physics/body/body_medium_break2.wav"
+	}
+}
+
+"Player.DrownContinue"
+{
+	"channel"		"CHAN_VOICE"
+	"volume"		"1.0"
+	"soundlevel"  	"SNDLVL_75dB"
+	"pitch"			"90,110"
+
+	"rndwave"
+	{
+		"wave"		"player/pl_drown1.wav"
+		"wave"		"player/pl_drown2.wav"
+		"wave"		"player/pl_drown3.wav"
+	}
+}
+
+"Player.Wade"
+{
+	"channel"		"CHAN_BODY"
+	"volume"		"0.25"
+	"soundlevel"  	"SNDLVL_75dB"
+
+	"rndwave"
+	{
+		"wave"		"player/footsteps/wade5.wav"
+		"wave"		"player/footsteps/wade6.wav"
+		"wave"		"player/footsteps/wade7.wav"
+		"wave"		"player/footsteps/wade8.wav"
+	}
+}
+
+"Player.AmbientUnderWater"
+{
+	"channel"		"CHAN_STATIC"
+	"volume"		"0.22"
+	"soundlevel"  	"SNDLVL_75dB"
+
+	"wave"			"ambient/water/underwater.wav"
+}
+
+"Player.UseTrain"
+{
+	"channel"		"CHAN_ITEM"
+	"volume"		"0.8"
+	"soundlevel"  	"SNDLVL_75dB"
+
+	"wave"			"plats/train_use1.wav"
+}
+
+"Player.UseDeny"
+{
+	"channel"		"CHAN_ITEM"
+	"volume"		"0.4"
+	"soundlevel"  	"SNDLVL_75dB"
+
+	"wave"			"common/wpn_select.wav"
+}
+
+"Player.PickupWeapon"
+{
+	"channel"		"CHAN_ITEM"
+	"volume"		"0.8"
+	"soundlevel"  	"SNDLVL_75dB"
+	"pitch"			"95,105"
+
+	"rndwave"
+	{
+		"wave"		"ui/hud/hud_ammo_collect_01.wav"
+		"wave"		"ui/hud/hud_ammo_collect_02.wav"
+		"wave"		"ui/hud/hud_ammo_collect_03.wav"
+		"wave"		"ui/hud/hud_ammo_collect_04.wav"
+		"wave"		"ui/hud/hud_ammo_collect_05.wav"
+		"wave"		"ui/hud/hud_ammo_collect_06.wav"
+		"wave"		"ui/hud/hud_ammo_collect_07.wav"
+		"wave"		"ui/hud/hud_ammo_collect_08.wav"
+		"wave"		"ui/hud/hud_ammo_collect_09.wav"
+		"wave"		"ui/hud/hud_ammo_collect_10.wav"
+		"wave"		"ui/hud/hud_ammo_collect_11.wav"
+		"wave"		"ui/hud/hud_ammo_collect_12.wav"
+	}
+}
+
+
+"Geiger.BeepLow"
+{
+	"channel"		"CHAN_STATIC"
+	"soundlevel"	"SNDLVL_NONE"
+	"pitch"			"PITCH_NORM"
+
+	"rndwave"
+	{
+		"wave"		"ui/hud/hud_geiger_low_single_01.wav"
+		"wave"		"ui/hud/hud_geiger_low_single_02.wav"
+		"wave"		"ui/hud/hud_geiger_low_single_03.wav"
+		"wave"		"ui/hud/hud_geiger_low_single_04.wav"
+		"wave"		"ui/hud/hud_geiger_low_single_05.wav"
+		"wave"		"ui/hud/hud_geiger_low_single_06.wav"
+		"wave"		"ui/hud/hud_geiger_low_single_07.wav"
+		"wave"		"ui/hud/hud_geiger_low_single_08.wav"
+		"wave"		"ui/hud/hud_geiger_low_single_09.wav"
+		"wave"		"ui/hud/hud_geiger_low_single_10.wav"
+		"wave"		"ui/hud/hud_geiger_low_single_11.wav"
+		"wave"		"ui/hud/hud_geiger_low_single_12.wav"
+	}
+}
+
+"Geiger.BeepHigh"
+{
+	"channel"		"CHAN_STATIC"
+	"soundlevel"	"SNDLVL_NONE"
+	"pitch"			"PITCH_NORM"
+
+	"rndwave"
+	{
+		"wave"		"ui/hud/hud_geiger_low_single_01.wav"
+		"wave"		"ui/hud/hud_geiger_low_multiple_01.wav"
+		"wave"		"ui/hud/hud_geiger_low_single_02.wav"
+		"wave"		"ui/hud/hud_geiger_low_multiple_02.wav"
+		"wave"		"ui/hud/hud_geiger_low_single_03.wav"
+		"wave"		"ui/hud/hud_geiger_low_multiple_03.wav"
+		"wave"		"ui/hud/hud_geiger_low_single_04.wav"
+		"wave"		"ui/hud/hud_geiger_low_multiple_04.wav"
+		"wave"		"ui/hud/hud_geiger_low_single_05.wav"
+		"wave"		"ui/hud/hud_geiger_low_multiple_05.wav"
+		"wave"		"ui/hud/hud_geiger_low_single_06.wav"
+		"wave"		"ui/hud/hud_geiger_low_multiple_06.wav"
+		"wave"		"ui/hud/hud_geiger_low_single_07.wav"
+		"wave"		"ui/hud/hud_geiger_low_multiple_07.wav"
+		"wave"		"ui/hud/hud_geiger_low_single_08.wav"
+		"wave"		"ui/hud/hud_geiger_low_multiple_08.wav"
+		"wave"		"ui/hud/hud_geiger_low_single_09.wav"
+		"wave"		"ui/hud/hud_geiger_low_multiple_09.wav"
+		"wave"		"ui/hud/hud_geiger_low_single_10.wav"
+		"wave"		"ui/hud/hud_geiger_low_multiple_10.wav"
+		"wave"		"ui/hud/hud_geiger_low_single_11.wav"
+		"wave"		"ui/hud/hud_geiger_low_multiple_11.wav"
+		"wave"		"ui/hud/hud_geiger_low_single_12.wav"
+		"wave"		"ui/hud/hud_geiger_low_multiple_12.wav"
+	}
+}

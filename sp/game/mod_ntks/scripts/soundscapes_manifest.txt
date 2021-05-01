@@ -1,0 +1,11 @@
+soundscapes_manifest
+{
+	"file"		"scripts/soundscapes.txt"
+
+	// List additional soundscape files here
+	
+	// Environmental Soundscapes
+
+	"file"		"scripts/soundscapes_midcity.txt"
+	"file"		"scripts/soundscapes_undercity.txt"
+}

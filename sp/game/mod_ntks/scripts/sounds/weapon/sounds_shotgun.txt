@@ -1,0 +1,159 @@
+// ============
+// Shotgun Entries
+// ============
+
+
+
+// =====
+// Player
+// =====
+
+"Weapon_Shotgun.Fire"
+{
+	"channel"			"CHAN_STATIC"
+	"volume"			"0.8"
+	"pitch"				"97,103"
+	"soundlevel"		"SNDLVL_79dB"
+
+	"rndwave"
+	{
+		"wave"			"weapon/shotgun/shotgun_fire_player_01.wav"
+		"wave"			"weapon/shotgun/shotgun_fire_player_02.wav"
+		"wave"			"weapon/shotgun/shotgun_fire_player_03.wav"
+	}
+}
+
+"Weapon_Shotgun.Fire_Alt"
+{
+	"channel"			"CHAN_STATIC"
+	"volume"			"0.85"
+	"pitch"				"97,103"
+	"soundlevel"		"SNDLVL_79dB"
+
+	"rndwave"
+	{
+		"wave"			"weapon/shotgun/shotgun_fire_alt_player_01.wav"
+		"wave"			"weapon/shotgun/shotgun_fire_alt_player_02.wav"
+		"wave"			"weapon/shotgun/shotgun_fire_alt_player_03.wav"
+	}
+}
+
+"Weapon_Shotgun.Dryfire"
+{
+	"channel"			"CHAN_STATIC"
+	"volume"			"0.5"
+	"pitch"				"112,118"
+	"soundlevel"		"SNDLVL_60dB"
+	
+	"rndwave"
+	{
+		"wave"			"weapon/sniperrifle/handling/sniperrifle_dryfire_01.wav"
+		"wave"			"weapon/sniperrifle/handling/sniperrifle_dryfire_02.wav"
+		"wave"			"weapon/sniperrifle/handling/sniperrifle_dryfire_03.wav"
+	}
+}
+
+
+
+// =====
+// Reload
+// =====
+
+"Weapon_Shotgun.Pump_Back"
+{
+	"channel"			"CHAN_STATIC"
+	"volume"			"0.75"
+	"pitch"				"97,103"
+	"soundlevel"		"SNDLVL_60dB"
+
+	"rndwave"
+	{
+		"wave"			"weapon/shotgun/handling/shotgun_bolt_back_01.wav"
+		"wave"			"weapon/shotgun/handling/shotgun_bolt_back_02.wav"
+		"wave"			"weapon/shotgun/handling/shotgun_bolt_back_03.wav"
+	}
+}
+
+"Weapon_Shotgun.Pump_Forward"
+{
+	"channel"			"CHAN_STATIC"
+	"volume"			"0.75"
+	"pitch"				"97,103"
+	"soundlevel"		"SNDLVL_60dB"
+
+	"rndwave"
+	{
+		"wave"			"weapon/shotgun/handling/shotgun_bolt_forward_01.wav"
+		"wave"			"weapon/shotgun/handling/shotgun_bolt_forward_02.wav"
+		"wave"			"weapon/shotgun/handling/shotgun_bolt_forward_03.wav"
+	}
+}
+
+"Weapon_Shotgun.Shell_Futz"
+{
+	"channel"			"CHAN_STATIC"
+	"volume"			"0.5"
+	"pitch"				"97,103"
+	"soundlevel"		"SNDLVL_60dB"
+	
+	"rndwave"
+	{
+		"wave"			"weapon/shotgun/handling/shotgun_shell_futz_01.wav"
+		"wave"			"weapon/shotgun/handling/shotgun_shell_futz_02.wav"
+		"wave"			"weapon/shotgun/handling/shotgun_shell_futz_03.wav"
+		"wave"			"weapon/shotgun/handling/shotgun_shell_futz_04.wav"
+		"wave"			"weapon/shotgun/handling/shotgun_shell_futz_05.wav"
+		"wave"			"weapon/shotgun/handling/shotgun_shell_futz_06.wav"
+	}
+}
+
+"Weapon_Shotgun.Shell_Load"
+{
+	"channel"			"CHAN_STATIC"
+	"volume"			"0.5"
+	"pitch"				"97,103"
+	"soundlevel"		"SNDLVL_60dB"
+	
+	"rndwave"
+	{
+		"wave"			"weapon/shotgun/handling/shotgun_shell_load_01.wav"
+		"wave"			"weapon/shotgun/handling/shotgun_shell_load_02.wav"
+		"wave"			"weapon/shotgun/handling/shotgun_shell_load_03.wav"
+	}
+}
+
+
+
+// ========
+// Non-Player
+// ========
+
+"Weapon_Shotgun.NPC_Fire"
+{
+	"channel"			"CHAN_WEAPON"
+	"volume"			"0.75"
+	"pitch"				"98,101"
+	"soundlevel"		"SNDLVL_GUNFIRE"
+
+	"rndwave"
+	{
+		"wave"			")weapon/sniperrifle/sniperrifle_fire_player_01.wav"
+		"wave"			")weapon/sniperrifle/sniperrifle_fire_player_02.wav"
+		"wave"			")weapon/sniperrifle/sniperrifle_fire_player_03.wav"
+	}
+}
+
+"Weapon_Shotgun.NPC_Reload"
+{
+	"channel"			"CHAN_ITEM"
+	"volume"			"0.50"
+	"pitch"				"95,105"
+	"soundlevel"		"SNDLVL_65dB"
+
+	"rndwave"
+	{
+		"wave"			"weapon/sniperrifle/handling/sniperrifle_bullet_load_01.wav"
+		"wave"			"weapon/sniperrifle/handling/sniperrifle_bullet_load_02.wav"
+		"wave"			"weapon/sniperrifle/handling/sniperrifle_bullet_load_03.wav"
+	}
+}

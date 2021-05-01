@@ -1,0 +1,367 @@
+// ==========
+// Music Entries
+// ==========
+
+
+
+// ===================
+// Raising the Bar - Comp 1
+// ===================
+
+"RTBR_Edge_of_Chaos"	
+{
+	"channel"			"CHAN_STATIC"
+	"volume"			"0.5"
+	"pitch"				"PITCH_NORM"
+	"soundlevel"		"0"
+
+	"wave"				"*#music/rtbr/comp1/rtbr_edge-of-chaos.mp3"
+}
+
+"RTBR_Ensemble_Conflict"		
+{
+	"channel"			"CHAN_STATIC"
+	"volume"			"0.5"
+	"pitch"				"PITCH_NORM"
+	"soundlevel"		"0"
+
+	"wave"				"*#music/rtbr/comp1/rtbr_ensemble-conflict.mp3"
+}
+
+"RTBR_Hazard_Zones"		
+{
+	"channel"			"CHAN_STATIC"
+	"volume"			"0.5"
+	"pitch"				"PITCH_NORM"
+	"soundlevel"		"0"
+
+	"wave"				"*#music/rtbr/comp1/rtbr_hazard-zones.mp3"
+}
+
+"RTBR_Incivility"	
+{
+	"channel"			"CHAN_STATIC"
+	"volume"			"0.5"
+	"pitch"				"PITCH_NORM"
+	"soundlevel"		"0"
+
+	"wave"				"*#music/rtbr/comp1/rtbr_incivility.mp3"
+}
+
+"RTBR_Lockout_Noncompliance"
+{
+	"channel"			"CHAN_STATIC"
+	"volume"			"0.5"
+	"pitch"				"PITCH_NORM"
+	"soundlevel"		"0"
+
+	"wave"				"*#music/rtbr/comp1/rtbr_lockout-noncompliance.mp3"
+}
+
+"RTBR_Low_Pressure_Phase"
+{
+	"channel"			"CHAN_STATIC"
+	"volume"			"0.5"
+	"pitch"				"PITCH_NORM"
+	"soundlevel"		"0"
+
+	"wave"				"*#music/rtbr/comp1/rtbr_low-pressure-phase.mp3"
+}
+
+"RTBR_MarkV_Point_Five"
+{
+	"channel"			"CHAN_STATIC"
+	"volume"			"0.5"
+	"pitch"				"PITCH_NORM"
+	"soundlevel"		"0"
+
+	"wave"				"*#music/rtbr/comp1/rtbr_mark-v-point-five.mp3"
+}
+
+"RTBR_Mixed_State"
+{
+	"channel"			"CHAN_STATIC"
+	"volume"			"0.5"
+	"pitch"				"PITCH_NORM"
+	"soundlevel"		"0"
+
+	"wave"				"*#music/rtbr/comp1/rtbr_mixed-state.mp3"
+}
+
+"RTBR_Pinned_Down"
+{
+	"channel"			"CHAN_STATIC"
+	"volume"			"0.5"
+	"pitch"				"PITCH_NORM"
+	"soundlevel"		"0"
+
+	"wave"				"*#music/rtbr/comp1/rtbr_pinned-down.mp3"
+}
+
+"RTBR_Terminus_Vector"
+{
+	"channel"			"CHAN_STATIC"
+	"volume"			"0.5"
+	"pitch"				"PITCH_NORM"
+	"soundlevel"		"0"
+
+	"wave"				"*#music/rtbr/comp1/rtbr_terminus-vector.mp3"
+}
+
+
+
+// ===================
+// Raising the Bar - Comp 2
+// ===================
+
+"RTBR_Alpha_Equulei"
+{
+	"channel"			"CHAN_STATIC"
+	"volume"			"0.5"
+	"pitch"				"PITCH_NORM"
+	"soundlevel"		"0"
+
+	"wave"				"*#music/rtbr/comp2/rtbr_alpha-equulei.mp3"
+}
+
+"RTBR_Auroral_Chorus"
+{
+	"channel"			"CHAN_STATIC"
+	"volume"			"0.5"
+	"pitch"				"PITCH_NORM"
+	"soundlevel"		"0"
+
+	"wave"				"*#music/rtbr/comp2/rtbr_auroral-chorus.mp3"
+}
+
+"RTBR_Auxiliary_Power"
+{
+	"channel"			"CHAN_STATIC"
+	"volume"			"0.5"
+	"pitch"				"PITCH_NORM"
+	"soundlevel"		"0"
+
+	"wave"				"*#music/rtbr/comp2/rtbr_auxiliary-power.mp3"
+}
+
+"RTBR_Dissident_Breach"
+{
+	"channel"			"CHAN_STATIC"
+	"volume"			"0.5"
+	"pitch"				"PITCH_NORM"
+	"soundlevel"		"0"
+
+	"wave"				"*#music/rtbr/comp2/rtbr_dissident-breach.mp3"
+}
+
+"RTBR_Exodus"
+{
+	"channel"			"CHAN_STATIC"
+	"volume"			"0.5"
+	"pitch"				"PITCH_NORM"
+	"soundlevel"		"0"
+
+	"wave"				"*#music/rtbr/comp2/rtbr_exodus.mp3"
+}
+
+"RTBR_Lockout_Rework"
+{
+	"channel"			"CHAN_STATIC"
+	"volume"			"0.5"
+	"pitch"				"PITCH_NORM"
+	"soundlevel"		"0"
+
+	"wave"				"*#music/rtbr/comp2/rtbr_lockout_rework.mp3"
+}
+
+"RTBR_More_On_The_Way"
+{
+	"channel"			"CHAN_STATIC"
+	"volume"			"0.5"
+	"pitch"				"PITCH_NORM"
+	"soundlevel"		"0"
+
+	"wave"				"*#music/rtbr/comp2/rtbr_more-on-the-way.mp3"
+}
+
+"RTBR_Our_Benefactors"
+{
+	"channel"			"CHAN_STATIC"
+	"volume"			"0.5"
+	"pitch"				"PITCH_NORM"
+	"soundlevel"		"0"
+
+	"wave"				"*#music/rtbr/comp2/rtbr_our-benefactors.mp3"
+}
+
+"RTBR_Wasteland_Voices"
+{
+	"channel"			"CHAN_STATIC"
+	"volume"			"0.5"
+	"pitch"				"PITCH_NORM"
+	"soundlevel"		"0"
+
+	"wave"				"*#music/rtbr/comp2/rtbr_wasteland-voices.mp3"
+}
+
+"RTBR_Work_of_Salvation"
+{
+	"channel"			"CHAN_STATIC"
+	"volume"			"0.5"
+	"pitch"				"PITCH_NORM"
+	"soundlevel"		"0"
+
+	"wave"				"*#music/rtbr/comp2/rtbr_work-of-salvation.mp3"
+}
+
+
+
+// ===================
+// Raising the Bar - Comp 3
+// ===================
+
+"RTBR_Aleph_Centrepoint"
+{
+	"channel"			"CHAN_STATIC"
+	"volume"			"0.5"
+	"pitch"				"PITCH_NORM"
+	"soundlevel"		"0"
+
+	"wave"				"*#music/rtbr/comp3/rtbr_aleph-centrepoint.mp3"
+}
+
+"RTBR_Annihilation_Operators"
+{
+	"channel"			"CHAN_STATIC"
+	"volume"			"0.5"
+	"pitch"				"PITCH_NORM"
+	"soundlevel"		"0"
+
+	"wave"				"*#music/rtbr/comp3/rtbr_aleph-centrepoint.mp3"
+}
+
+"RTBR_Brandenburg"
+{
+	"channel"			"CHAN_STATIC"
+	"volume"			"0.5"
+	"pitch"				"PITCH_NORM"
+	"soundlevel"		"0"
+
+	"wave"				"*#music/rtbr/comp3/rtbr_brandenburg.mp3"
+}
+
+"RTBR_Canum_Venaticorum"
+{
+	"channel"			"CHAN_STATIC"
+	"volume"			"0.5"
+	"pitch"				"PITCH_NORM"
+	"soundlevel"		"0"
+
+	"wave"				"*#music/rtbr/comp3/rtbr_canum-venaticorum.mp3"
+}
+
+"RTBR_Ensemble_Invariance"
+{
+	"channel"			"CHAN_STATIC"
+	"volume"			"0.5"
+	"pitch"				"PITCH_NORM"
+	"soundlevel"		"0"
+
+	"wave"				"*#music/rtbr/comp3/rtbr_canum-venaticorum.mp3"
+}
+
+"RTBR_Equilibrium"
+{
+	"channel"			"CHAN_STATIC"
+	"volume"			"0.5"
+	"pitch"				"PITCH_NORM"
+	"soundlevel"		"0"
+
+	"wave"				"*#music/rtbr/comp3/rtbr_equilibrium.mp3"
+}
+
+"RTBR_Malcompliance_Verdict"
+{
+	"channel"			"CHAN_STATIC"
+	"volume"			"0.5"
+	"pitch"				"PITCH_NORM"
+	"soundlevel"		"0"
+
+	"wave"				"*#music/rtbr/comp3/rtbr_malcompliance-verdict.mp3"
+}
+
+"RTBR_Oberheim_Biofragment"
+{
+	"channel"			"CHAN_STATIC"
+	"volume"			"0.5"
+	"pitch"				"PITCH_NORM"
+	"soundlevel"		"0"
+
+	"wave"				"*#music/rtbr/comp3/rtbr_oberheim-biofragment.mp3"
+}
+
+"RTBR_Peace_Hymn_For_The_Union"
+{
+	"channel"			"CHAN_STATIC"
+	"volume"			"0.5"
+	"pitch"				"PITCH_NORM"
+	"soundlevel"		"0"
+
+	"wave"				"*#music/rtbr/comp3/rtbr_peace-hymn-for-the-union.mp3"
+}
+
+"RTBR_Substorm_Phases"
+{
+	"channel"			"CHAN_STATIC"
+	"volume"			"0.5"
+	"pitch"				"PITCH_NORM"
+	"soundlevel"		"0"
+
+	"wave"				"*#music/rtbr/comp3/rtbr_substorm-phases.mp3"
+}
+
+
+
+// ===================
+// Raising the Bar - Comp 4
+// ===================
+
+"RTBR_High_Pressure"
+{
+	"channel"			"CHAN_STATIC"
+	"volume"			"0.5"
+	"pitch"				"PITCH_NORM"
+	"soundlevel"		"0"
+
+	"wave"				"*#music/rtbr/comp4/rtbr_high_pressure.mp3"
+}
+
+"RTBR_Reversal_Symmetry"
+{
+	"channel"			"CHAN_STATIC"
+	"volume"			"0.5"
+	"pitch"				"PITCH_NORM"
+	"soundlevel"		"0"
+
+	"wave"				"*#music/rtbr/comp4/rtbr_reversal_symmetry.mp3"
+}
+
+"RTBR_Tefres_Aimatos"
+{
+	"channel"			"CHAN_STATIC"
+	"volume"			"0.5"
+	"pitch"				"PITCH_NORM"
+	"soundlevel"		"0"
+
+	"wave"				"*#music/rtbr/comp4/rtbr_tefres_aimatos.mp3"
+}
+
+"RTBR_Vector_Error"
+{
+	"channel"			"CHAN_STATIC"
+	"volume"			"0.5"
+	"pitch"				"PITCH_NORM"
+	"soundlevel"		"0"
+
+	"wave"				"*#music/rtbr/comp4/rtbr_vector-error.mp3"
+}

@@ -1,0 +1,105 @@
+
+"midcity.outdoors"
+
+//
+//---------------------------------------
+//wind loop
+
+
+{
+	
+	
+	"dsp"	"0"
+	"playlooping"
+	{
+		"volume"	"0.8"
+		"pitch"		"100"
+		"wave"		"skylines.wav"
+	}
+	
+	
+
+
+
+//
+//----------------------------------------
+// flyby
+
+	"playrandom"
+	{
+
+		"time"		"15,25"
+		"volume"	"0.6, 0.8"
+		"pitch"		"90,100"
+
+		"rndwave"
+		{
+			"wave"	"Aircraft_bys_01.wav"
+			"wave"	"Aircraft_bys_02.wav"
+			
+		}
+	}
+	
+//
+//----------------------------------------	
+// trainpass
+
+	"playrandom"
+	{
+
+		"time"		"15,25"
+		"volume"	"0.5, 0.7"
+		"pitch"		"95,100"
+
+		"rndwave"
+		{
+			"wave"	"train_pass.wav"
+			
+		}
+	}
+	
+}
+
+"midcity.flats"
+
+//
+//---------------------------------------
+//wind loop
+
+
+{
+	
+	
+	"dsp"	"0"
+	"playlooping"
+	{
+		"volume"	"1.0"
+		"pitch"		"100"
+		"wave"		"skylines.wav"
+	}
+
+}
+	
+	
+//----------------------------------------
+// flyby
+
+	"playrandom"
+	{
+
+		"time"		"20,35"
+		"volume"	"0.5, 0.6"
+		"pitch"		"90,100"
+
+		"rndwave"
+		{
+			"wave"	"Aircraft_bys_01.wav"
+			"wave"	"Aircraft_bys_02.wav"
+			
+		}
+	}
+	
+//
+
+
+//

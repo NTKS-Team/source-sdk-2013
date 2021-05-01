@@ -1,0 +1,204 @@
+// ===============
+// .357 Revolver Entries
+// ===============
+
+
+
+
+
+
+// =====
+// Player
+// =====
+
+"Weapon_357.Fire"
+{
+	"channel"			"CHAN_STATIC"
+	"volume"			"0.80"
+	"pitch"				"97,103"
+	"soundlevel"		"SNDLVL_79dB"
+
+	"rndwave"		
+	{
+		"wave" 			"weapon/357/357_fire_player_body_01.wav"
+		"wave" 			"weapon/357/357_fire_player_body_02.wav"
+		"wave" 			"weapon/357/357_fire_player_body_03.wav"
+		"wave" 			"weapon/357/357_fire_player_body_04.wav"
+		"wave" 			"weapon/357/357_fire_player_body_05.wav"
+		"wave" 			"weapon/357/357_fire_player_body_06.wav"
+	}
+}
+
+"Weapon_357.Bass"
+{
+	"channel"			"CHAN_STATIC"
+	"volume"			"1.0"
+	"pitch"				"97,103"
+	"soundlevel"		"SNDLVL_79dB"
+
+	"rndwave"		
+	{
+		"wave" 			"weapon/357/357_fire_player_bass_01.wav"
+		"wave" 			"weapon/357/357_fire_player_bass_02.wav"
+		"wave" 			"weapon/357/357_fire_player_bass_03.wav"
+		"wave" 			"weapon/357/357_fire_player_bass_04.wav"
+		"wave" 			"weapon/357/357_fire_player_bass_05.wav"
+		"wave" 			"weapon/357/357_fire_player_bass_06.wav"
+	}
+}
+
+"Weapon_357.Mech"
+{
+	"channel"			"CHAN_STATIC"
+	"volume"			"0.60"
+	"pitch"				"97,103"
+	"soundlevel"		"SNDLVL_79dB"
+
+	"rndwave"		
+	{
+		"wave" 			"weapon/357/357_fire_player_mech_01.wav"
+		"wave" 			"weapon/357/357_fire_player_mech_02.wav"
+		"wave" 			"weapon/357/357_fire_player_mech_03.wav"
+		"wave" 			"weapon/357/357_fire_player_mech_04.wav"
+		"wave" 			"weapon/357/357_fire_player_mech_05.wav"
+		"wave" 			"weapon/357/357_fire_player_mech_06.wav"
+	}
+}
+
+"Weapon_357.Dryfire"
+{
+	"channel"			"CHAN_STATIC"
+	"volume"			"0.5"
+	"pitch"				"PITCH_NORM"
+	"soundlevel"		"SNDLVL_60dB"
+
+	"rndwave"		
+	{
+		"wave" 			"weapon/357/357_fire_player_mech_01.wav"
+		"wave" 			"weapon/357/357_fire_player_mech_02.wav"
+		"wave" 			"weapon/357/357_fire_player_mech_03.wav"
+		"wave" 			"weapon/357/357_fire_player_mech_04.wav"
+		"wave" 			"weapon/357/357_fire_player_mech_05.wav"
+		"wave" 			"weapon/357/357_fire_player_mech_06.wav"
+	}
+}
+
+
+
+// =====
+// Reload
+// =====
+
+"Weapon_357.Cylinder_Open"
+{
+	"channel"			"CHAN_STATIC"
+	"volume"			"0.5"
+	"pitch"				"PITCH_NORM"
+	"soundlevel"		"SNDLVL_60dB"
+
+	"rndwave"		
+	{
+	"wave"				"weapon/357/handling/357_cylinder_open_01.wav"
+	"wave"				"weapon/357/handling/357_cylinder_open_02.wav"
+	"wave"				"weapon/357/handling/357_cylinder_open_03.wav"
+	}
+}
+
+"Weapon_357.Cylinder_Ejector"
+{
+	"channel"			"CHAN_STATIC"
+	"volume"			"0.5"
+	"pitch"				"PITCH_NORM"
+	"soundlevel"		"SNDLVL_60dB"
+
+	"rndwave"		
+	{
+	"wave"				"weapon/357/handling/357_cylinder_ejector_01.wav"
+	"wave"				"weapon/357/handling/357_cylinder_ejector_02.wav"
+	"wave"				"weapon/357/handling/357_cylinder_ejector_03.wav"
+	}
+}
+
+"Weapon_357.Cylinder_Unload"
+{
+	"channel"			"CHAN_STATIC"
+	"volume"			"0.5"
+	"pitch"				"PITCH_NORM"
+	"soundlevel"		"SNDLVL_60dB"
+
+	"rndwave"		
+	{
+	"wave"				"weapon/357/handling/357_cylinder_unload_01.wav"
+	"wave"				"weapon/357/handling/357_cylinder_unload_02.wav"
+	"wave"				"weapon/357/handling/357_cylinder_unload_03.wav"
+	}
+}		
+
+"Weapon_357.Cylinder_Load"
+{
+	"channel"			"CHAN_STATIC"
+	"volume"			"0.5"
+	"pitch"				"PITCH_NORM"
+	"soundlevel"		"SNSDLVL_60dB"
+	
+	"rndwave"		
+	{
+	"wave"				"weapon/357/handling/357_cylinder_load_01.wav"
+	"wave"				"weapon/357/handling/357_cylinder_load_02.wav"
+	"wave"				"weapon/357/handling/357_cylinder_load_03.wav"
+	}
+}
+
+"Weapon_357.Cylinder_Close"
+{
+	"channel"			"CHAN_STATIC"
+	"volume"			"0.5"
+	"pitch"				"PITCH_NORM"
+	"soundlevel"		"SNDLVL_60dB"
+
+	"rndwave"		
+	{
+	"wave"				"weapon/357/handling/357_cylinder_close_01.wav"
+	"wave"				"weapon/357/handling/357_cylinder_close_02.wav"
+	"wave"				"weapon/357/handling/357_cylinder_close_03.wav"
+	}
+}
+
+
+
+// ========
+// Non-Player
+// ========
+
+"Weapon_357.NPC_Fire"
+{
+	"channel"			"CHAN_WEAPON"
+	"volume"			"0.75"
+	"pitch"				"97,103"
+	"soundlevel"		"SNDLVL_GUNFIRE"
+
+	"rndwave"		
+	{
+		"wave" 			")weapon/357/357_fire_player_01.wav"
+		"wave" 			")weapon/357/357_fire_player_02.wav"
+		"wave" 			")weapon/357/357_fire_player_03.wav"
+		"wave" 			")weapon/357/357_fire_player_04.wav"
+		"wave" 			")weapon/357/357_fire_player_05.wav"
+		"wave" 			")weapon/357/357_fire_player_06.wav"
+	}
+}
+
+"Weapon_357.NPC_Reload"
+{
+	"channel"			"CHAN_ITEM"
+	"volume"			"0.5"
+	"pitch"				"PITCH_NORM"
+	"soundlevel"		"SNDLVL_60dB"
+
+	"rndwave"		
+	{
+	"wave"				"weapon/357/handling/357_cylinder_close_01.wav"
+	"wave"				"weapon/357/handling/357_cylinder_close_02.wav"
+	"wave"				"weapon/357/handling/357_cylinder_close_03.wav"
+	}
+}

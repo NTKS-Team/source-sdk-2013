@@ -1,0 +1,17 @@
+// ==================
+// Police Voice Definitions
+// ==================
+
+// ============
+// Isaac's Apartment
+// ============
+
+"police.doorknock"
+{
+	"channel"			"CHAN_VOICE"
+	"volume"			"VOL_NORM"
+	"pitch"				"PITCH_NORM"
+	"soundlevel"		"SNDLVL_TALKING"	
+
+	"wave"				"vo\police\copknock.wav"
+}

@@ -1,0 +1,75 @@
+
+"undercity.outdoors"
+
+//
+//---------------------------------------
+//wind loop
+
+
+{
+	
+	
+	"dsp"	"0"
+	"playlooping"
+	{
+		"volume"	"0.7"
+		"pitch"		"100"
+		"wave"		"outside_loop.wav"
+	}
+	
+	
+
+
+
+//
+//----------------------------------------
+// flyby-hopper
+
+	"playrandom"
+	{
+
+		"time"		"10,25"
+		"volume"		"0.7"
+		"pitch"		"100"
+
+		"rndwave"
+		{
+			"wave"	"hopper_pass.wav"
+			
+		}
+	}
+	
+}
+
+"undercity.tunnels"
+
+//
+//---------------------------------------
+//sewersounds
+
+
+{
+	
+	
+	"dsp"	"0"
+	"playlooping"
+	{
+		"volume"	"0.2"
+		"pitch"		"80"
+		"wave"		"sewerhum.wav"
+	}
+
+
+
+	
+	
+	"dsp"	"0"
+	"playlooping"
+	{
+		"volume"	"0.2"
+		"pitch"		"100"
+		"wave"		"nuclearhum.wav"
+	}
+
+}
+	

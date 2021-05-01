@@ -1,0 +1,17 @@
+"Bounce.OICWMag"
+{
+	"pitch"				"PITCH_NORM"
+	"volume"			"0.5"
+	"soundlevel"		"SNDLVL_60dB"
+	"channel"			"CHAN_STATIC"
+	
+	"rndwave"
+	{
+		"wave"			"^fx/magazine/magazine_oicw_01.wav"
+		"wave"			"^fx/magazine/magazine_oicw_02.wav"
+		"wave"			"^fx/magazine/magazine_oicw_03.wav"
+		"wave"			"^fx/magazine/magazine_oicw_04.wav"
+		"wave"			"^fx/magazine/magazine_oicw_05.wav"
+		"wave"			"^fx/magazine/magazine_oicw_06.wav"
+	}
+}

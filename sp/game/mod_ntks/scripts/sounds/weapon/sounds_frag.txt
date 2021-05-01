@@ -1,0 +1,66 @@
+// =======================
+// Fragmentation Grenade Entries
+// =======================
+
+
+
+// =====
+// Player
+// =====
+
+
+"WeaponFrag.Roll"
+{
+	"channel"			"CHAN_STATIC"
+	"volume"			"0.75"
+	"pitch"				"PITCH_NORM"
+	"soundlevel"  	"SNDLVL_75dB"
+
+	"wave"				"weapon/frag/frag_roll_player_01.wav"
+}
+
+"Grenade.Blip"
+{
+	"channel"			"CHAN_WEAPON"
+	"volume"			"0.7"
+	"pitch"				"PITCH_NORM"
+	"soundlevel"  	"SNDLVL_90dB"
+	
+	"wave"				"weapon/frag/frag_tick_01.wav"
+}
+"Weapon_Frag.Pin_pull"
+{
+	"channel"			"CHAN_STATIC"
+	"volume"			"0.75"
+	"pitch"				"PITCH_NORM"
+	"soundlevel"		"SNDLVL_65dB"
+
+	"wave" 			"weapon/frag/handling/frag_pin_pull_01.wav"
+
+}
+
+"WeaponFrag.Throw"
+{
+	"channel"			"CHAN_STATIC"
+	"volume"			"0.75"
+	"pitch"				"PITCH_NORM"
+	"soundlevel"  	"SNDLVL_75dB"
+
+	"wave"				"weapon/frag/frag_throw_player_01.wav"
+}
+
+"WeaponFrag.Throw_Alt"
+{
+	"channel"			"CHAN_STATIC"
+	"volume"			"0.75"
+	"pitch"				"PITCH_NORM"
+	"soundlevel"  	"SNDLVL_75dB"
+
+	"wave"				"weapon/frag/frag_throw_player_alt_01.wav"
+}
+
+
+
+// ========
+// Non-Player
+// ========

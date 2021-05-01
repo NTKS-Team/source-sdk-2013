@@ -1,0 +1,23 @@
+// ==========
+// Pistol Entries
+// ==========
+
+
+
+
+
+
+// =====
+// Player
+// =====
+
+"Weapon_Pistol.Fire"
+{
+	"channel"			"CHAN_STATIC"
+	"volume"			"0.9"
+	"pitch"				"100"
+	"soundlevel"		"SNDLVL_79dB"
+
+	"wave"			"weapon/pistol/pistol_fire_player_01.wav"
+
+}

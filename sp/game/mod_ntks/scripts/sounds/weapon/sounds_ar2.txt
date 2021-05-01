@@ -1,0 +1,112 @@
+// =========
+// AR2 Entries
+// =========
+
+
+
+// =====
+// Player
+// =====
+
+"Weapon_AR2.Fire"
+{
+	"channel"			"CHAN_STATIC"
+	"volume"			"0.5"
+	"pitch"				"97,103"
+	"soundlevel"		"SNDLVL_79dB"
+
+	"wave"				"weapon/ar2/ar2_fire.wav"
+}
+
+"Weapon_AR2.Fire_Alt"
+{
+	"channel"			"CHAN_WEAPON"
+	"volume"			"0.8"
+	"pitch"				"97,103"
+	"soundlevel"		"SNDLVL_79dB"
+
+	"wave"				"weapon/ar2/ar2_alt_release.wav"
+}
+
+"Weapon_AR2.Special1"
+{
+	"channel"			"CHAN_WEAPON"
+	"volume"			"0.8"
+	"pitch"				"97,103"
+	"soundlevel"		"SNDLVL_79dB"
+
+	"wave"				"weapon/ar2/ar2_alt_charge.wav"
+}
+
+"Weapon_AR2.Dryfire"
+{
+	"channel"			"CHAN_ITEM"
+	"volume"			"0.5"
+	"pitch"				"PITCH_NORM"
+	"soundlevel"		"SNDLVL_60dB"
+
+	"wave"				"weapon/ar2/ar2_dryfire.wav"
+}
+
+
+
+// =====
+// Reload
+// =====
+
+"Weapon_AR2.Reload_Rotate"
+{
+	"channel"			"CHAN_ITEM"
+	"volume"			"0.5"
+	"pitch"				"PITCH_NORM"
+	"soundlevel"		"SNDLVL_60dB"
+
+	"wave"				"weapon/ar2/ar2_reload_rotate.wav"
+} 
+
+"Weapon_AR2.Reload_Push"
+{
+	"channel"			"CHAN_ITEM"
+	"volume"			"0.5"
+	"pitch"				"PITCH_NORM"
+	"soundlevel"		"SNDLVL_60dB"
+
+	"wave"				"weapon/ar2/ar2_reload_push.wav"
+}
+
+
+
+// ========
+// Non-Player
+// ========
+
+"Weapon_AR2.NPC_Fire"
+{
+	"channel"			"CHAN_WEAPON"
+	"volume"			"0.75"
+	"pitch"				"97,103"
+	"soundlevel"		"SNDLVL_GUNFIRE"
+
+	"wave"				"^weapon/ar2/ar2_npc_fire.wav"
+
+}
+
+"Weapon_AR2.NPC_Double"
+{
+	"channel"			"CHAN_WEAPON"
+	"volume"			"0.75"
+	"pitch"				"97,103"
+	"soundlevel"		"SNDLVL_GUNFIRE"
+
+	"wave"				")weapon/ar2/npc_ar2_altfire.wav"
+}
+
+"Weapon_AR2.NPC_Reload"
+{
+	"channel"			"CHAN_ITEM"
+	"volume"			"0.5"
+	"pitch"				"PITCH_NORM"
+	"soundlevel"		"SNDLVL_60dB"
+
+	"wave"				"weapon/ar2/ar2_npc_reload.wav"
+}
