@@ -394,10 +394,19 @@ void CBaseViewModel::CalcViewModelView( CBasePlayer *owner, const Vector& eyePos
 	QAngle vmangles = eyeAngles;
 	Vector vmorigin = eyePosition;
 
+	Vector vecOffset = vec3_origin;
+	QAngle angOffset = vec3_angle;
+	float adjustBlend = 1.0f, offsetBlend = 0.0f;
+
 	CBaseCombatWeapon *pWeapon = m_hWeapon.Get();
 	//Allow weapon lagging
 	if ( pWeapon != NULL )
 	{
+#ifdef MOD_NTKS
+		pWeapon->GetViewModelOffset( vecOffset, angOffset, offsetBlend );
+		adjustBlend = 1.0f - offsetBlend;
+#endif
+
 #if defined( CLIENT_DLL )
 		if ( !prediction->InPrediction() )
 #endif
@@ -412,14 +421,20 @@ void CBaseViewModel::CalcViewModelView( CBasePlayer *owner, const Vector& eyePos
 	// Add model-specific bob even if no weapon associated (for head bob for off hand models)
 	AddViewModelBob( owner, vmorigin, vmangles );
 
+#ifdef MOD_NTKS
+	float adjustBob = max( adjustBlend, 0.15f );
+	vmangles = eyeAngles + (vmangles - eyeAngles) * adjustBob;
+	vmorigin = eyePosition + (vmorigin - eyePosition) * adjustBob;
+#endif
+
 #if defined( CLIENT_DLL )
 	if ( !prediction->InPrediction() )
 	{
 		// Add lag
-		CalcViewModelLag( vmorigin, vmangles, vmangoriginal );
+		CalcViewModelLag( vmorigin, vmangles, vmangoriginal, adjustBlend );
 
 		// Let the viewmodel shake at about 10% of the amplitude of the player's view
-		vieweffects->ApplyShake( vmorigin, vmangles, 0.1 );	
+		vieweffects->ApplyShake( vmorigin, vmangles, 0.1f * adjustBlend );
 	}
 #endif
 
@@ -428,14 +443,23 @@ void CBaseViewModel::CalcViewModelView( CBasePlayer *owner, const Vector& eyePos
 		g_ClientVirtualReality.OverrideViewModelTransform( vmorigin, vmangles, pWeapon && pWeapon->ShouldUseLargeViewModelVROverride() );
 	}
 #ifdef MOD_NTKS
-	else if ( cl_alternate_weapon_origin.GetBool() )
+	else
 	{
+		vecOffset *= offsetBlend;
+		angOffset *= offsetBlend;
+
+		if ( cl_alternate_weapon_origin.GetBool() )
+		{
+			vecOffset += Vector( -1.0f, -1.5f, -0.5f ) * adjustBlend;
+		}
+
 		Vector vForward, vRight, vUp;
 		AngleVectors( vmangles, &vForward, &vRight, &vUp );
 
-		vmorigin += vRight * -1.5f;
-		vmorigin += vForward * -1.0f;
-		vmorigin += vUp * -0.5f;
+		VectorMA( vmorigin, vecOffset.x, vForward, vmorigin );
+		VectorMA( vmorigin, vecOffset.y, vRight, vmorigin );
+		VectorMA( vmorigin, vecOffset.z, vUp, vmorigin );
+		vmangles += angOffset;
 	}
 #endif
 
@@ -477,7 +501,7 @@ void CBaseViewModel::CalcViewModelView( CBasePlayer *owner, const Vector& eyePos
 //-----------------------------------------------------------------------------
 float g_fMaxViewModelLag = 1.5f;
 
-void CBaseViewModel::CalcViewModelLag( Vector& origin, QAngle& angles, QAngle& original_angles )
+void CBaseViewModel::CalcViewModelLag( Vector& origin, QAngle& angles, QAngle& original_angles, float blend )
 {
 	Vector vOriginalOrigin = origin;
 	QAngle vOriginalAngles = angles;
@@ -495,10 +519,16 @@ void CBaseViewModel::CalcViewModelLag( Vector& origin, QAngle& angles, QAngle& o
 
 		float flSpeed = 5.0f;
 #ifdef MOD_NTKS
+		float inverseBlend = 1.0f - blend;
 		if ( cl_alternate_weapon_origin.GetBool() )
 		{
-			flSpeed = 8.0f;
-			maxViewModelLag = 1.0f;
+			flSpeed = 7.5f + 11.5f * inverseBlend;
+			maxViewModelLag = 1.0f - 0.9f * inverseBlend;
+		}
+		else
+		{
+			flSpeed += 19.0f * inverseBlend;
+			maxViewModelLag -= 1.4f * inverseBlend;
 		}
 #endif
 
@@ -508,7 +538,12 @@ void CBaseViewModel::CalcViewModelLag( Vector& origin, QAngle& angles, QAngle& o
 		if ( (flDiff > maxViewModelLag) && (maxViewModelLag > 0.0f) )
 		{
 			float flScale = flDiff / maxViewModelLag;
+#ifdef MOD_NTKS
+			// multiplying caused stuttery viewmodel
+			flSpeed += flScale * 2;
+#else
 			flSpeed *= flScale;
+#endif
 		}
 
 		// FIXME:  Needs to be predictable?
@@ -536,9 +571,9 @@ void CBaseViewModel::CalcViewModelLag( Vector& origin, QAngle& angles, QAngle& o
 	}
 
 	//FIXME: These are the old settings that caused too many exposed polys on some models
-	VectorMA( origin, -pitch * 0.035f,	forward,	origin );
-	VectorMA( origin, -pitch * 0.03f,		right,	origin );
-	VectorMA( origin, -pitch * 0.02f,		up,		origin);
+	VectorMA( origin, -pitch * 0.035f * blend,	forward,	origin );
+	VectorMA( origin, -pitch * 0.03f * blend,		right,	origin );
+	VectorMA( origin, -pitch * 0.02f * blend,		up,		origin);
 }
 
 //-----------------------------------------------------------------------------

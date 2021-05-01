@@ -34,9 +34,14 @@
 
 BEGIN_DATADESC( CWeaponAR2 )
 
+	DEFINE_FIELD( m_bIsIronsighting, FIELD_BOOLEAN ),
+	DEFINE_FIELD( m_flIronsightTime, FIELD_TIME ),
+
 END_DATADESC()
 
 IMPLEMENT_SERVERCLASS_ST(CWeaponAR2, DT_WeaponAR2)
+	SendPropBool( SENDINFO(m_bIsIronsighting) ),
+	SendPropTime( SENDINFO(m_flIronsightTime) ),
 END_SEND_TABLE()
 
 LINK_ENTITY_TO_CLASS( weapon_ar2, CWeaponAR2 );
@@ -158,6 +163,9 @@ CWeaponAR2::CWeaponAR2( )
 	m_nShotsFired	= 0;
 	m_nVentPose		= -1;
 
+	m_bIsIronsighting = false;
+	m_flIronsightTime = 0.0f;
+
 	m_bAltFiresUnderwater = false;
 }
 
@@ -186,6 +194,112 @@ void CWeaponAR2::ItemPostFrame( void )
 	}
 
 	BaseClass::ItemPostFrame();
+}
+
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+void CWeaponAR2::SecondaryAttack( void )
+{
+	CBasePlayer *pPlayer = ToBasePlayer( GetOwner() );
+	if ( !pPlayer || !( pPlayer->m_afButtonPressed & IN_ATTACK2 ) )
+	{
+		return;
+	}
+
+	if ( m_bIsIronsighting )
+	{
+		if ( !pPlayer->SetFOV( pPlayer, pPlayer->GetDefaultFOV(), 0.2f ) )
+		{
+			return;
+		}
+		m_bIsIronsighting = false;
+		pPlayer->ShowCrosshair( true );
+	}
+	else
+	{
+		if ( !pPlayer->SetFOV( pPlayer, pPlayer->GetDefaultFOV() - 35, 0.2f ) )
+		{
+			return;
+		}
+		m_bIsIronsighting = true;
+		pPlayer->ShowCrosshair( false );
+	}
+
+	m_flIronsightTime = gpGlobals->curtime;
+	m_flNextSecondaryAttack = gpGlobals->curtime + 0.1f;
+}
+
+void CWeaponAR2::DisableIronsights( void )
+{
+	CBasePlayer *pPlayer = ToBasePlayer( GetOwner() );
+	if ( !pPlayer || !m_bIsIronsighting )
+	{
+		return;
+	}
+
+	m_bIsIronsighting = false;
+	pPlayer->SetFOV( pPlayer, pPlayer->GetDefaultFOV(), 0.3f );
+	pPlayer->ShowCrosshair( true );
+}
+
+bool CWeaponAR2::Holster( CBaseCombatWeapon *pSwitchingTo )
+{
+	if ( !BaseClass::Holster( pSwitchingTo ) )
+	{
+		return false;
+	}
+
+	DisableIronsights();
+
+	return true;
+}
+
+bool CWeaponAR2::DefaultReload( int iClipSize1, int iClipSize2, int iActivity )
+{
+	if ( !BaseClass::DefaultReload( iClipSize1, iClipSize2, iActivity ) )
+	{
+		return false;
+	}
+
+	DisableIronsights();
+
+	return true;
+}
+
+void CWeaponAR2::Drop( const Vector &vecVelocity )
+{
+	DisableIronsights();
+	BaseClass::Drop( vecVelocity );
+}
+
+#if 0
+ConVar is_f( "is_f", "0.0", FCVAR_REPLICATED );
+ConVar is_r( "is_r", "0.0", FCVAR_REPLICATED );
+ConVar is_u( "is_u", "0.0", FCVAR_REPLICATED );
+ConVar is_p( "is_p", "0.0", FCVAR_REPLICATED );
+ConVar is_y( "is_y", "0.0", FCVAR_REPLICATED );
+ConVar is_l( "is_l", "0.0", FCVAR_REPLICATED );
+#endif
+
+void CWeaponAR2::GetViewModelOffset( Vector &vecOffset, QAngle &angOffset, float &blend )
+{
+	CBasePlayer *pPlayer = ToBasePlayer( GetOwner() );
+	if ( !pPlayer )
+	{
+		return;
+	}
+
+	blend = min( 1.0f, ( gpGlobals->curtime - m_flIronsightTime ) * 5.5f );
+	if ( ! m_bIsIronsighting )
+	{
+		blend = 1.0f - blend;
+	}
+
+	//vecOffset = Vector( is_f.GetFloat(), is_r.GetFloat(), is_u.GetFloat() );
+	//angOffset = QAngle( is_p.GetFloat(), is_y.GetFloat(), is_l.GetFloat() );
+	vecOffset = Vector( 0.0f, -2.81f, 0.68f );
+	angOffset = QAngle( 0, 0, 0 );
 }
 
 //-----------------------------------------------------------------------------
@@ -278,10 +392,6 @@ void CWeaponAR2::Operator_HandleAnimEvent( animevent_t *pEvent, CBaseCombatChara
 //-----------------------------------------------------------------------------
 void CWeaponAR2::AddViewKick( void )
 {
-	#define	EASY_DAMPEN			0.5f
-	#define	MAX_VERTICAL_KICK	8.0f	//Degrees
-	#define	SLIDE_LIMIT			5.0f	//Seconds
-	
 	//Get the view kick
 	CBasePlayer *pPlayer = ToBasePlayer( GetOwner() );
 
@@ -299,9 +409,32 @@ void CWeaponAR2::AddViewKick( void )
 		flDuration = MIN( flDuration, 0.75f );
 	}
 
-	DoMachineGunKick( pPlayer, EASY_DAMPEN, MAX_VERTICAL_KICK, flDuration, SLIDE_LIMIT );
+	float easy_dampen = 0.5f;
+	float max_vertical_kick = 8.0f; //Degrees
+	float slide_limit = 5.0f; //Seconds
+	if ( m_bIsIronsighting )
+	{
+		easy_dampen = 0.8f;
+		max_vertical_kick *= 2.5f;
+		slide_limit *= 2.0f;
+	}
+	DoMachineGunKick( pPlayer, easy_dampen, max_vertical_kick, flDuration, slide_limit );
 }
 
+//-----------------------------------------------------------------------------
+const Vector& CWeaponAR2::GetBulletSpread( void )
+{
+	if ( m_bIsIronsighting )
+	{
+		static Vector cone = VECTOR_CONE_1DEGREES;
+		return cone;
+	}
+	else
+	{
+		static Vector cone = VECTOR_CONE_3DEGREES;
+		return cone;
+	}
+}
 //-----------------------------------------------------------------------------
 const WeaponProficiencyInfo_t *CWeaponAR2::GetProficiencyValues()
 {

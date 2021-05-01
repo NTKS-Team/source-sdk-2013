@@ -130,6 +130,7 @@ $Project "Client (NTKS)"
 
 		$Folder	"NTKS"
 		{
+			$File	"ntks\c_weapon_ar2.cpp"
 		}
 	}
 	

@@ -49,7 +49,7 @@ ConVar cl_wpn_sway_interp( "cl_wpn_sway_interp", "0.1", FCVAR_CLIENTDLL );
 ConVar cl_wpn_sway_scale( "cl_wpn_sway_scale", "1.0", FCVAR_CLIENTDLL|FCVAR_CHEAT );
 #endif
 
-void CPredictedViewModel::CalcViewModelLag( Vector& origin, QAngle& angles, QAngle& original_angles )
+void CPredictedViewModel::CalcViewModelLag( Vector& origin, QAngle& angles, QAngle& original_angles, float blend )
 {
 #ifdef CLIENT_DLL
 #ifdef SDK_DLL
@@ -61,7 +61,7 @@ void CPredictedViewModel::CalcViewModelLag( Vector& origin, QAngle& angles, QAng
 	}
 
 	Vector oldOrigin = origin;
-	BaseClass::CalcViewModelLag( origin, angles, original_angles );
+	BaseClass::CalcViewModelLag( origin, angles, original_angles, blend );
 
 	m_vPredictedOffset = origin - oldOrigin;
 

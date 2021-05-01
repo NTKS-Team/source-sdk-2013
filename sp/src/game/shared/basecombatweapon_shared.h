@@ -265,6 +265,10 @@ public:
 
 	virtual void			SetViewModel();
 
+#ifdef MOD_NTKS
+	virtual void			GetViewModelOffset( Vector &vecOffset, QAngle &angOffset, float &blend ) { vecOffset = vec3_origin; angOffset = vec3_angle; blend = 0.0f; }
+#endif
+
 	virtual bool			HasWeaponIdleTimeElapsed( void );
 	virtual void			SetWeaponIdleTime( float time );
 	virtual float			GetWeaponIdleTime( void );

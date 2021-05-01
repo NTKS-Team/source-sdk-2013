@@ -26,6 +26,13 @@ public:
 	DECLARE_SERVERCLASS();
 
 	void	ItemPostFrame( void );
+	void	SecondaryAttack( void );
+	void	DisableIronsights( void );
+	bool	Holster( CBaseCombatWeapon *pSwitchingTo );
+	bool	DefaultReload( int iClipSize1, int iClipSize2, int iActivity );
+	void	Drop( const Vector &vecVelocity );
+
+	void	GetViewModelOffset( Vector &vecOffset, QAngle &angOffset, float &blend );
 
 	void	AddViewKick( void );
 
@@ -37,22 +44,20 @@ public:
 	int		GetMaxBurst( void ) { return 5; }
 	float	GetFireRate( void ) { return 0.1f; }
 
+	bool	UsesSecondaryAmmo( void ) { return false; }
 	int		CapabilitiesGet( void ) { return bits_CAP_WEAPON_RANGE_ATTACK1; }
 
 	Activity	GetPrimaryAttackActivity( void );
 
-	virtual const Vector& GetBulletSpread( void )
-	{
-		static Vector cone = VECTOR_CONE_2DEGREES;
-
-		return cone;
-	}
+	virtual const Vector& GetBulletSpread( void );
 
 	const WeaponProficiencyInfo_t *GetProficiencyValues();
 
 protected:
 
 	int						m_nVentPose;
+	CNetworkVar( bool, m_bIsIronsighting );
+	CNetworkVar( float, m_flIronsightTime );
 
 	DECLARE_ACTTABLE();
 	DECLARE_DATADESC();
