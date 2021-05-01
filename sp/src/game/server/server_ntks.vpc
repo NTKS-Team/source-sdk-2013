@@ -255,7 +255,6 @@ $Project "Server (NTKS)"
 			$File	"hl2\weapon_frag.cpp"
 			$File	"hl2\weapon_physcannon.cpp"
 			$File	"hl2\weapon_physcannon.h"
-			$File	"hl2\weapon_pistol.cpp"
 			$File	"hl2\weapon_rpg.cpp"
 			$File	"hl2\weapon_rpg.h"
 			$File	"hl2\weapon_smg1.cpp"
@@ -302,6 +301,7 @@ $Project "Server (NTKS)"
 			$File	"ntks\weapon_ar2.cpp"
 			$File	"ntks\weapon_ar2.h"
 			$File	"ntks\weapon_shotgun.cpp"
+			$File	"ntks\weapon_pistol.cpp"
 		}
 	}
 }
