@@ -5,4 +5,4 @@ models/* filter=lfs diff=lfs merge=lfs -text
 particles/* filter=lfs diff=lfs merge=lfs -text
 sounds/* filter=lfs diff=lfs merge=lfs -text
 resource/*.ttf filter=lfs diff=lfs merge=lfs -text
-resource/NTKS_mapbase_episodic_*.txt text working-tree-encoding=UTF-16 eol=crlf
+resource/NTKS_mapbase_episodic_*.txt text working-tree-encoding=UTF-16LE-BOM eol=crlf
