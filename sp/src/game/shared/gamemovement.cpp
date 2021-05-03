@@ -1715,7 +1715,7 @@ float CGameMovement::GetAirSpeedCap( void )
 #ifdef MOD_NTKS
 	// reduce the airspeed when we just walljumped, which pushes the player away from the surface,
 	// usually opposite of where the player was moving
-	if ( player->m_Local.m_bWallJumped && player->m_Local.m_flJumpTime > GAMEMOVEMENT_JUMP_TIME * sv_walljump_movement_time_delay_factor.GetFloat() )
+	if ( player->m_Local.m_iWallsJumped && player->m_Local.m_flJumpTime > GAMEMOVEMENT_JUMP_TIME * sv_walljump_movement_time_delay_factor.GetFloat() )
 	{
 		return sv_airspeed.GetFloat() * ( 1.0f - ( ( player->m_Local.m_flJumpTime * sv_walljump_movement_time_delay_factor.GetFloat() ) / GAMEMOVEMENT_JUMP_TIME ) );
 	}
@@ -2380,6 +2380,7 @@ static ConVar sv_walljump_detect_distance( "sv_walljump_detect_distance", "4.0",
 static ConVar sv_walljump_forward_boost_percent( "sv_walljump_forward_boost_percent", "0.3", FCVAR_REPLICATED, "forwards boost modifier" );
 static ConVar sv_walljump_fall_compensation( "sv_walljump_fall_compensation", "220.0", FCVAR_REPLICATED, "nullifies up to that much fall speed" );
 static ConVar sv_walljump_time_delay_factor( "sv_walljump_time_delay_factor", "0.7", FCVAR_REPLICATED, "factor in [0..1] which delays how soon after jumping you can do a walljump" );
+static ConVar sv_walljump_limit( "sv_walljump_limit", "3", FCVAR_REPLICATED, "number of times a walljump can be performed before touching ground again" );
 #endif
 
 //-----------------------------------------------------------------------------
@@ -2456,7 +2457,7 @@ bool CGameMovement::CheckJumpButton( void )
 	// No more effect
 	if (player->GetGroundEntity() == NULL)
 	{
-		if ( player->m_Local.m_bWallJumped )
+		if ( player->m_Local.m_iWallsJumped >= sv_walljump_limit.GetInt() )
 		{
 			mv->m_nOldButtons |= IN_JUMP;
 			return false;		// in air, so no effect
@@ -2525,7 +2526,7 @@ bool CGameMovement::CheckJumpButton( void )
 
 		mv->m_vecVelocity += tr.plane.normal * sv_walljump_strength_normal.GetFloat() * physprops->GetSurfaceData( tr.surface.surfaceProps )->GetJumpFactor();
 
-		player->m_Local.m_bWallJumped = true;
+		++player->m_Local.m_iWallsJumped;
 #endif
 	}
 
@@ -2561,7 +2562,7 @@ bool CGameMovement::CheckJumpButton( void )
 	}
 
 #ifdef MOD_NTKS
-	if ( player->m_Local.m_bWallJumped )
+	if ( player->m_Local.m_iWallsJumped )
 	{
 		flMul *= sv_walljump_strength_up_factor.GetFloat();
 	}
@@ -2599,7 +2600,7 @@ bool CGameMovement::CheckJumpButton( void )
 		// to not accumulate over time.
 		float flSpeedBoostPerc = ( !pMoveData->m_bIsSprinting && !player->m_Local.m_bDucked ) ? 0.5f : 0.1f;
 #ifdef MOD_NTKS
-		if ( !player->m_Local.m_bDucked && player->m_Local.m_bWallJumped )
+		if ( !player->m_Local.m_bDucked && player->m_Local.m_iWallsJumped )
 		{
 			flSpeedBoostPerc = sv_walljump_forward_boost_percent.GetFloat();
 		}
@@ -3753,7 +3754,7 @@ void CGameMovement::SetGroundEntity( trace_t *pm )
 			MoveHelper()->AddToTouched( *pm, mv->m_vecVelocity );
 		}
 #ifdef MOD_NTKS
-		else player->m_Local.m_bWallJumped = false;
+		else player->m_Local.m_iWallsJumped = 0;
 #endif
 
 		mv->m_vecVelocity.z = 0.0f;

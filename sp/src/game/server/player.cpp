@@ -5810,7 +5810,7 @@ bool CBasePlayer::GetInVehicle( IServerVehicle *pVehicle, int nRole )
 	m_Local.m_flDuckJumpTime = 0.0f;
 	m_Local.m_flJumpTime = 0.0f;
 #ifdef MOD_NTKS
-	m_Local.m_bWallJumped = false;
+	m_Local.m_iWallsJumped = 0;
 #endif
 
 	// Turn our toggled duck off
