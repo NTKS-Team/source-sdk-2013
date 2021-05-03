@@ -50,7 +50,7 @@ public:
 	float					m_flDuckJumpTime;
 	float					m_flJumpTime;
 #ifdef MOD_NTKS
-	bool					m_bWallJumped;
+	int						m_iWallsJumped;
 #endif
 	int						m_nStepside;
 	float					m_flFallVelocity;
