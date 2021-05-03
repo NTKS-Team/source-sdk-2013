@@ -2367,7 +2367,7 @@ void CHL2_Player::SuitPower_Update( void )
 				bool bIsStanding = !fabs(GetAbsVelocity().x) && !fabs(GetAbsVelocity().y);
 #ifdef MOD_NTKS
 				// don't drain while in air
-				bIsStanding |= ( GetFlags() & FL_ONGROUND );
+				bIsStanding |= !( GetFlags() & FL_ONGROUND );
 #endif
 				if ( bIsStanding ) {
 					// If player's not moving, don't drain sprint juice.

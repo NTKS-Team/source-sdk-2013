@@ -1703,6 +1703,27 @@ void CGameMovement::FinishGravity( void )
 	CheckVelocity();
 }
 
+#ifdef MOD_NTKS
+static ConVar sv_walljump_movement_time_delay_factor( "sv_walljump_movement_time_delay_factor", "0.5", FCVAR_REPLICATED, "factor in [1..] which delays air movement after walljump" );
+static ConVar sv_airspeed( "sv_airspeed", "200.0", FCVAR_REPLICATED );
+#endif
+
+//-----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
+float CGameMovement::GetAirSpeedCap( void )
+{
+#ifdef MOD_NTKS
+	// reduce the airspeed when we just walljumped, which pushes the player away from the surface,
+	// usually opposite of where the player was moving
+	if ( player->m_Local.m_bWallJumped && player->m_Local.m_flJumpTime > GAMEMOVEMENT_JUMP_TIME * sv_walljump_movement_time_delay_factor.GetFloat() )
+	{
+		return sv_airspeed.GetFloat() * ( 1.0f - ( ( player->m_Local.m_flJumpTime * sv_walljump_movement_time_delay_factor.GetFloat() ) / GAMEMOVEMENT_JUMP_TIME ) );
+	}
+	return sv_airspeed.GetFloat();
+#endif
+	return 30.f;
+}
+
 //-----------------------------------------------------------------------------
 // Purpose: 
 // Input  : wishdir - 
@@ -2351,6 +2372,15 @@ void CGameMovement::PlaySwimSound()
 	MoveHelper()->StartSound( mv->GetAbsOrigin(), "Player.Swim" );
 }
 
+#ifdef MOD_NTKS
+static ConVar sv_walljump_strength_up_factor( "sv_walljump_strength_up_factor", "1.0", FCVAR_REPLICATED, "upwards jump strength modifier" );
+static ConVar sv_walljump_strength_normal( "sv_walljump_strength_normal", "250.0", FCVAR_REPLICATED, "lateral jump strenhth modifier (based on surface normal) " );
+static ConVar sv_walljump_strength_normal_z_factor( "sv_walljump_strength_normal_z_factor", "0.2", FCVAR_REPLICATED, "surface normal Z dampening" );
+static ConVar sv_walljump_detect_distance( "sv_walljump_detect_distance", "4.0", FCVAR_REPLICATED, "maximum distance from surface to allow walljumps" );
+static ConVar sv_walljump_forward_boost_percent( "sv_walljump_forward_boost_percent", "0.3", FCVAR_REPLICATED, "forwards boost modifier" );
+static ConVar sv_walljump_fall_compensation( "sv_walljump_fall_compensation", "220.0", FCVAR_REPLICATED, "nullifies up to that much fall speed" );
+static ConVar sv_walljump_time_delay_factor( "sv_walljump_time_delay_factor", "0.7", FCVAR_REPLICATED, "factor in [0..1] which delays how soon after jumping you can do a walljump" );
+#endif
 
 //-----------------------------------------------------------------------------
 // Purpose: 
@@ -2395,12 +2425,15 @@ bool CGameMovement::CheckJumpButton( void )
 		return false;
 	}
 
+	// check moved below
+#ifndef MOD_NTKS
 	// No more effect
  	if (player->GetGroundEntity() == NULL)
 	{
 		mv->m_nOldButtons |= IN_JUMP;
 		return false;		// in air, so no effect
 	}
+#endif
 
 	// Don't allow jumping when the player is in a stasis field.
 #ifndef HL2_EPISODIC
@@ -2418,6 +2451,83 @@ bool CGameMovement::CheckJumpButton( void )
 	// Still updating the eye position.
 	if ( player->m_Local.m_flDuckJumpTime > 0.0f )
 		return false;
+
+#ifdef MOD_NTKS
+	// No more effect
+	if (player->GetGroundEntity() == NULL)
+	{
+		if ( player->m_Local.m_bWallJumped )
+		{
+			mv->m_nOldButtons |= IN_JUMP;
+			return false;		// in air, so no effect
+		}
+
+		// wait some time after jumping before executing the walljump
+		if ( player->m_Local.m_flJumpTime > GAMEMOVEMENT_JUMP_TIME * sv_walljump_time_delay_factor.GetFloat() )
+		{
+			return false;
+		}
+
+		Vector vecMoveDirection;
+		VectorMultiply( m_vecForward, mv->m_flForwardMove, vecMoveDirection );
+		VectorMA( vecMoveDirection, mv->m_flSideMove, m_vecRight, vecMoveDirection );
+		VectorMA( vecMoveDirection, mv->m_flUpMove, m_vecUp, vecMoveDirection );
+		vecMoveDirection.NormalizeInPlace();
+		vecMoveDirection *= sv_walljump_detect_distance.GetFloat();
+
+		trace_t tr;
+#if 0
+		Ray_t ray;
+		ray.Init( mv->GetAbsOrigin(), mv->GetAbsOrigin() + vecMoveDirection, GetPlayerMins( true ), GetPlayerMaxs( true ) );
+		UTIL_TraceRay( ray, PlayerSolidMask(), mv->m_nPlayerHandle.Get(), COLLISION_GROUP_PLAYER_MOVEMENT, &tr );
+		if ( tr.startsolid )
+#endif
+		Vector traceOrigin = mv->GetAbsOrigin();
+		// get edge of BBox
+		if ( vecMoveDirection.x < 0 )
+		{
+			traceOrigin.x += GetPlayerMins().x;
+		}
+		else if ( vecMoveDirection.x > 0 )
+		{
+			traceOrigin.x += GetPlayerMaxs().x;
+		}
+		if ( vecMoveDirection.y < 0 )
+		{
+			traceOrigin.y += GetPlayerMins().y;
+		}
+		else if ( vecMoveDirection.y > 0 )
+		{
+			traceOrigin.y += GetPlayerMaxs().y;
+		}
+		traceOrigin.z += GetPlayerMins().z;
+		UTIL_TraceLine( traceOrigin, traceOrigin + vecMoveDirection, PlayerSolidMask(), mv->m_nPlayerHandle.Get(), COLLISION_GROUP_PLAYER_MOVEMENT, &tr );
+
+		// no hit or surface too flat
+		if ( tr.fraction == 1.0f || fabs( tr.plane.normal.z ) > 0.4f )
+		{
+			return false;
+		}
+
+		// let's stop some falling velocity
+		if ( mv->m_vecVelocity.z < 0.0f )
+		{
+			mv->m_vecVelocity.z += sv_walljump_fall_compensation.GetFloat();
+			if ( mv->m_vecVelocity.z > 0.0f )
+			{
+				mv->m_vecVelocity.z = 0.0f;
+			}
+		}
+
+		// we already give an upwards boost, so dampen the normal a bit
+		tr.plane.normal.z *= sv_walljump_strength_normal_z_factor.GetFloat();
+		tr.plane.normal.NormalizeInPlace();
+
+		mv->m_vecVelocity += tr.plane.normal * sv_walljump_strength_normal.GetFloat() * physprops->GetSurfaceData( tr.surface.surfaceProps )->GetJumpFactor();
+
+		player->m_Local.m_bWallJumped = true;
+#endif
+	}
 
 
 	// In the air now.
@@ -2450,6 +2560,13 @@ bool CGameMovement::CheckJumpButton( void )
 		flMul = sqrt(2 * GetCurrentGravity() * GAMEMOVEMENT_JUMP_HEIGHT);
 	}
 
+#ifdef MOD_NTKS
+	if ( player->m_Local.m_bWallJumped )
+	{
+		flMul *= sv_walljump_strength_up_factor.GetFloat();
+	}
+#endif
+
 	// Acclerate upward
 	// If we are ducking...
 	float startz = mv->m_vecVelocity[2];
@@ -2481,6 +2598,12 @@ bool CGameMovement::CheckJumpButton( void )
 		// We give a certain percentage of the current forward movement as a bonus to the jump speed.  That bonus is clipped
 		// to not accumulate over time.
 		float flSpeedBoostPerc = ( !pMoveData->m_bIsSprinting && !player->m_Local.m_bDucked ) ? 0.5f : 0.1f;
+#ifdef MOD_NTKS
+		if ( !player->m_Local.m_bDucked && player->m_Local.m_bWallJumped )
+		{
+			flSpeedBoostPerc = sv_walljump_forward_boost_percent.GetFloat();
+		}
+#endif
 		float flSpeedAddition = fabs( mv->m_flForwardMove * flSpeedBoostPerc );
 		float flMaxSpeed = mv->m_flMaxSpeed + ( mv->m_flMaxSpeed * flSpeedBoostPerc );
 		float flNewSpeed = ( flSpeedAddition + mv->m_vecVelocity.Length2D() );
@@ -3629,6 +3752,9 @@ void CGameMovement::SetGroundEntity( trace_t *pm )
 		{
 			MoveHelper()->AddToTouched( *pm, mv->m_vecVelocity );
 		}
+#ifdef MOD_NTKS
+		else player->m_Local.m_bWallJumped = false;
+#endif
 
 		mv->m_vecVelocity.z = 0.0f;
 	}
