@@ -2388,7 +2388,7 @@ static ConVar sv_walljump_detect_previous_momentum_distance( "sv_walljump_detect
 static ConVar sv_walljump_detect_current_momentum_distance( "sv_walljump_detect_current_momentum_distance", "10.0", FCVAR_REPLICATED, "maximum distance from surface to allow walljump detection by current momentum" );
 static ConVar sv_walljump_forward_boost_percent( "sv_walljump_forward_boost_percent", "0.3", FCVAR_REPLICATED, "forwards boost modifier" );
 static ConVar sv_walljump_fall_compensation( "sv_walljump_fall_compensation", "220.0", FCVAR_REPLICATED, "nullifies up to that much fall speed" );
-static ConVar sv_walljump_time_delay_factor( "sv_walljump_time_delay_factor", "0.7", FCVAR_REPLICATED, "factor in [0..1] which delays how soon after jumping you can do a walljump" );
+static ConVar sv_walljump_time_delay_factor( "sv_walljump_time_delay_factor", "0.1", FCVAR_REPLICATED, "factor in [0..1] which delays how soon after jumping you can do a walljump" );
 static ConVar sv_walljump_limit( "sv_walljump_limit", "3", FCVAR_REPLICATED, "number of times a walljump can be performed before touching ground again" );
 static ConVar sv_walljump_strength_reduction_factor( "sv_walljump_strength_reduction_factor", "0.75", FCVAR_REPLICATED, "factor to make each consecutive walljump less powerful" );
 #endif
