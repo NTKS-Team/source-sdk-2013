@@ -629,6 +629,10 @@ CGameMovement::CGameMovement( void )
 	mv					= NULL;
 
 	memset( m_flStuckCheckTime, 0, sizeof(m_flStuckCheckTime) );
+
+#ifdef MOD_NTKS
+	m_vecDirectionBeforeCollision = vec3_origin;
+#endif
 }
 
 //-----------------------------------------------------------------------------
@@ -2374,14 +2378,43 @@ void CGameMovement::PlaySwimSound()
 
 #ifdef MOD_NTKS
 static ConVar sv_walljump_strength_up_factor( "sv_walljump_strength_up_factor", "1.0", FCVAR_REPLICATED, "upwards jump strength modifier" );
-static ConVar sv_walljump_strength_normal( "sv_walljump_strength_normal", "250.0", FCVAR_REPLICATED, "lateral jump strenhth modifier (based on surface normal) " );
+static ConVar sv_walljump_strength_normal( "sv_walljump_strength_normal", "250.0", FCVAR_REPLICATED, "lateral jump strength modifier (based on surface normal) " );
 static ConVar sv_walljump_strength_normal_z_factor( "sv_walljump_strength_normal_z_factor", "0.2", FCVAR_REPLICATED, "surface normal Z dampening" );
-static ConVar sv_walljump_detect_distance( "sv_walljump_detect_distance", "4.0", FCVAR_REPLICATED, "maximum distance from surface to allow walljumps" );
+static ConVar sv_walljump_detect_use_bbox( "sv_walljump_detect_use_bbox", "1", FCVAR_REPLICATED, "whether detection happens via box- or line-check" );
+static ConVar sv_walljump_detect_bbox_scale( "sv_walljump_detect_bbox_scale", "0.5", FCVAR_REPLICATED, "scale bounding box of player by this factor for wall detecton" );
+static ConVar sv_walljump_detect_bbox_height( "sv_walljump_detect_bbox_height", "20", FCVAR_REPLICATED, "height of bounding box for wall detecton" );
+static ConVar sv_walljump_detect_move_distance( "sv_walljump_detect_move_distance", "12.0", FCVAR_REPLICATED, "maximum distance from surface to allow walljump detection by movement" );
+static ConVar sv_walljump_detect_previous_momentum_distance( "sv_walljump_detect_previous_momentum_distance", "10.0", FCVAR_REPLICATED, "maximum distance from surface to allow walljump detection by previous momentum" );
+static ConVar sv_walljump_detect_current_momentum_distance( "sv_walljump_detect_current_momentum_distance", "10.0", FCVAR_REPLICATED, "maximum distance from surface to allow walljump detection by current momentum" );
 static ConVar sv_walljump_forward_boost_percent( "sv_walljump_forward_boost_percent", "0.3", FCVAR_REPLICATED, "forwards boost modifier" );
 static ConVar sv_walljump_fall_compensation( "sv_walljump_fall_compensation", "220.0", FCVAR_REPLICATED, "nullifies up to that much fall speed" );
 static ConVar sv_walljump_time_delay_factor( "sv_walljump_time_delay_factor", "0.7", FCVAR_REPLICATED, "factor in [0..1] which delays how soon after jumping you can do a walljump" );
 static ConVar sv_walljump_limit( "sv_walljump_limit", "3", FCVAR_REPLICATED, "number of times a walljump can be performed before touching ground again" );
 #endif
+
+static Vector ToBBoxEdge2D( Vector origin, const Vector &mins, const Vector &maxs, const Vector &direction )
+{
+	// get edge of BBox
+	if ( direction.x < 0 )
+	{
+		origin.x += mins.x;
+	}
+	else if ( direction.x > 0 )
+	{
+		origin.x += maxs.x;
+	}
+
+	if ( direction.y < 0 )
+	{
+		origin.y += mins.y;
+	}
+	else if ( direction.y > 0 )
+	{
+		origin.y += maxs.y;
+	}
+
+	return origin;
+}
 
 //-----------------------------------------------------------------------------
 // Purpose: 
@@ -2474,38 +2507,87 @@ bool CGameMovement::CheckJumpButton( void )
 		VectorMA( vecMoveDirection, mv->m_flSideMove, m_vecRight, vecMoveDirection );
 		VectorMA( vecMoveDirection, mv->m_flUpMove, m_vecUp, vecMoveDirection );
 		vecMoveDirection.NormalizeInPlace();
-		vecMoveDirection *= sv_walljump_detect_distance.GetFloat();
+		vecMoveDirection *= sv_walljump_detect_move_distance.GetFloat();
+
+		Vector playerMins = GetPlayerMins( true ) * sv_walljump_detect_bbox_scale.GetFloat();
+		Vector playerMaxs = GetPlayerMaxs( true ) * sv_walljump_detect_bbox_scale.GetFloat();
+		playerMaxs.z = sv_walljump_detect_bbox_height.GetFloat() + playerMins.z;
 
 		trace_t tr;
-#if 0
-		Ray_t ray;
-		ray.Init( mv->GetAbsOrigin(), mv->GetAbsOrigin() + vecMoveDirection, GetPlayerMins( true ), GetPlayerMaxs( true ) );
-		UTIL_TraceRay( ray, PlayerSolidMask(), mv->m_nPlayerHandle.Get(), COLLISION_GROUP_PLAYER_MOVEMENT, &tr );
-		if ( tr.startsolid )
-#endif
-		Vector traceOrigin = mv->GetAbsOrigin();
-		// get edge of BBox
-		if ( vecMoveDirection.x < 0 )
+		if ( sv_walljump_detect_use_bbox.GetBool() )
 		{
-			traceOrigin.x += GetPlayerMins().x;
+			Ray_t ray;
+			ray.Init( mv->GetAbsOrigin(), mv->GetAbsOrigin() + vecMoveDirection, playerMins, playerMaxs );
+			UTIL_TraceRay( ray, PlayerSolidMask(), mv->m_nPlayerHandle.Get(), COLLISION_GROUP_PLAYER_MOVEMENT, &tr );
 		}
-		else if ( vecMoveDirection.x > 0 )
+		else
 		{
-			traceOrigin.x += GetPlayerMaxs().x;
+			Vector traceOrigin = ToBBoxEdge2D( mv->GetAbsOrigin(), playerMins, playerMaxs, vecMoveDirection );
+			traceOrigin.z += playerMins.z;
+			UTIL_TraceLine( traceOrigin, traceOrigin + vecMoveDirection, PlayerSolidMask(), mv->m_nPlayerHandle.Get(), COLLISION_GROUP_PLAYER_MOVEMENT, &tr );
 		}
-		if ( vecMoveDirection.y < 0 )
-		{
-			traceOrigin.y += GetPlayerMins().y;
-		}
-		else if ( vecMoveDirection.y > 0 )
-		{
-			traceOrigin.y += GetPlayerMaxs().y;
-		}
-		traceOrigin.z += GetPlayerMins().z;
-		UTIL_TraceLine( traceOrigin, traceOrigin + vecMoveDirection, PlayerSolidMask(), mv->m_nPlayerHandle.Get(), COLLISION_GROUP_PLAYER_MOVEMENT, &tr );
 
-		// no hit or surface too flat
-		if ( tr.fraction == 1.0f || fabs( tr.plane.normal.z ) > 0.4f )
+		if ( tr.startsolid )
+		{
+			Warning( "move walljump-check starts in solid\n" );
+		}
+
+		// no hit
+		if ( tr.startsolid || tr.fraction == 1.0f )
+		{
+			vecMoveDirection = m_vecDirectionBeforeCollision;
+			vecMoveDirection *= sv_walljump_detect_previous_momentum_distance.GetFloat();
+			if ( sv_walljump_detect_use_bbox.GetBool() )
+			{
+				Ray_t ray;
+				ray.Init( mv->GetAbsOrigin(), mv->GetAbsOrigin() + vecMoveDirection, playerMins, playerMaxs );
+				UTIL_TraceRay( ray, PlayerSolidMask(), mv->m_nPlayerHandle.Get(), COLLISION_GROUP_PLAYER_MOVEMENT, &tr );
+			}
+			else
+			{
+				Vector traceOrigin = ToBBoxEdge2D( mv->GetAbsOrigin(), playerMins, playerMaxs, vecMoveDirection );
+				traceOrigin.z += playerMins.z;
+				UTIL_TraceLine( traceOrigin, traceOrigin + vecMoveDirection, PlayerSolidMask(), mv->m_nPlayerHandle.Get(), COLLISION_GROUP_PLAYER_MOVEMENT, &tr );
+			}
+
+			if ( tr.startsolid )
+			{
+				Warning( "previous momentum walljump-check starts in solid\n" );
+			}
+
+			// no hit
+			if ( tr.startsolid || tr.fraction == 1.0f )
+			{
+				vecMoveDirection = mv->m_vecVelocity.Normalized();
+				vecMoveDirection *= sv_walljump_detect_current_momentum_distance.GetFloat();
+				if ( sv_walljump_detect_use_bbox.GetBool() )
+				{
+					Ray_t ray;
+					ray.Init( mv->GetAbsOrigin(), mv->GetAbsOrigin() + vecMoveDirection, playerMins, playerMaxs );
+					UTIL_TraceRay( ray, PlayerSolidMask(), mv->m_nPlayerHandle.Get(), COLLISION_GROUP_PLAYER_MOVEMENT, &tr );
+				}
+				else
+				{
+					Vector traceOrigin = ToBBoxEdge2D( mv->GetAbsOrigin(), playerMins, playerMaxs, vecMoveDirection );
+					traceOrigin.z += playerMins.z;
+					UTIL_TraceLine( traceOrigin, traceOrigin + vecMoveDirection, PlayerSolidMask(), mv->m_nPlayerHandle.Get(), COLLISION_GROUP_PLAYER_MOVEMENT, &tr );
+				}
+
+				if ( tr.startsolid )
+				{
+					Warning( "current momentum walljump-check starts in solid\n" );
+				}
+
+				// no hit
+				if ( tr.startsolid || tr.fraction == 1.0f )
+				{
+					return false;
+				}
+			}
+		}
+
+		// too flat
+		if ( fabs( tr.plane.normal.z ) > 0.4f )
 		{
 			return false;
 		}
@@ -2525,10 +2607,11 @@ bool CGameMovement::CheckJumpButton( void )
 		tr.plane.normal.NormalizeInPlace();
 
 		mv->m_vecVelocity += tr.plane.normal * sv_walljump_strength_normal.GetFloat() * physprops->GetSurfaceData( tr.surface.surfaceProps )->GetJumpFactor();
+		m_vecDirectionBeforeCollision = vec3_origin;
 
 		++player->m_Local.m_iWallsJumped;
-#endif
 	}
+#endif
 
 
 	// In the air now.
@@ -2811,6 +2894,15 @@ int CGameMovement::TryPlayerMove( Vector *pFirstDest, trace_t *pFirstTrace )
 		{
 			blocked |= 1;		// floor
 		}
+#ifdef MOD_NTKS
+		// this is recorded for the walljump, so let's only check for collision with suitable walls
+		else if (pm.plane.normal.z <= 0.6f)
+		{
+			m_vecDirectionBeforeCollision = mv->m_vecVelocity;
+			m_vecDirectionBeforeCollision.NormalizeInPlace();
+		}
+		//TODO: do walljump logic here?
+#endif
 		// If the plane has a zero z component in the normal, then it's a 
 		//  step or wall
 		if (!pm.plane.normal[2])
@@ -3754,7 +3846,11 @@ void CGameMovement::SetGroundEntity( trace_t *pm )
 			MoveHelper()->AddToTouched( *pm, mv->m_vecVelocity );
 		}
 #ifdef MOD_NTKS
-		else player->m_Local.m_iWallsJumped = 0;
+		else
+		{
+			player->m_Local.m_iWallsJumped = 0;
+			m_vecDirectionBeforeCollision = vec3_origin;
+		}
 #endif
 
 		mv->m_vecVelocity.z = 0.0f;
