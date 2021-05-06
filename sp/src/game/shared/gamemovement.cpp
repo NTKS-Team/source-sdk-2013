@@ -2390,6 +2390,7 @@ static ConVar sv_walljump_forward_boost_percent( "sv_walljump_forward_boost_perc
 static ConVar sv_walljump_fall_compensation( "sv_walljump_fall_compensation", "220.0", FCVAR_REPLICATED, "nullifies up to that much fall speed" );
 static ConVar sv_walljump_time_delay_factor( "sv_walljump_time_delay_factor", "0.7", FCVAR_REPLICATED, "factor in [0..1] which delays how soon after jumping you can do a walljump" );
 static ConVar sv_walljump_limit( "sv_walljump_limit", "3", FCVAR_REPLICATED, "number of times a walljump can be performed before touching ground again" );
+static ConVar sv_walljump_strength_reduction_factor( "sv_walljump_strength_reduction_factor", "0.75", FCVAR_REPLICATED, "factor to make each consecutive walljump less powerful" );
 #endif
 
 static Vector ToBBoxEdge2D( Vector origin, const Vector &mins, const Vector &maxs, const Vector &direction )
@@ -2596,6 +2597,7 @@ bool CGameMovement::CheckJumpButton( void )
 		// let's stop some falling velocity
 		if ( mv->m_vecVelocity.z < 0.0f )
 		{
+			// TODO: apply reduction here as well?
 			mv->m_vecVelocity.z += sv_walljump_fall_compensation.GetFloat();
 			if ( mv->m_vecVelocity.z > 0.0f )
 			{
@@ -2607,7 +2609,12 @@ bool CGameMovement::CheckJumpButton( void )
 		tr.plane.normal.z *= sv_walljump_strength_normal_z_factor.GetFloat();
 		tr.plane.normal.NormalizeInPlace();
 
-		mv->m_vecVelocity += tr.plane.normal * sv_walljump_strength_normal.GetFloat() * physprops->GetSurfaceData( tr.surface.surfaceProps )->GetJumpFactor();
+		Vector vecWalljump = tr.plane.normal * sv_walljump_strength_normal.GetFloat() * physprops->GetSurfaceData( tr.surface.surfaceProps )->GetJumpFactor();
+		for ( int i = player->m_Local.m_iWallsJumped; i != 0; --i )
+		{
+			vecWalljump *= sv_walljump_strength_reduction_factor.GetFloat();
+		}
+		mv->m_vecVelocity += vecWalljump;
 		m_vecDirectionBeforeCollision = vec3_origin;
 
 		++player->m_Local.m_iWallsJumped;
