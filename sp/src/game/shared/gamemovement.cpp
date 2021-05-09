@@ -2391,6 +2391,9 @@ static ConVar sv_walljump_fall_compensation( "sv_walljump_fall_compensation", "2
 static ConVar sv_walljump_time_delay_factor( "sv_walljump_time_delay_factor", "0.1", FCVAR_REPLICATED, "factor in [0..1] which delays how soon after jumping you can do a walljump" );
 static ConVar sv_walljump_limit( "sv_walljump_limit", "3", FCVAR_REPLICATED, "number of times a walljump can be performed before touching ground again" );
 static ConVar sv_walljump_strength_reduction_factor( "sv_walljump_strength_reduction_factor", "0.75", FCVAR_REPLICATED, "factor to make each consecutive walljump less powerful" );
+static ConVar sv_walljump_fall_compensation_reduction_factor( "sv_walljump_fall_compensation_reduction_factor", "0.9", FCVAR_REPLICATED, "factor to make each consecutive walljump fall compensation less powerful" );
+static ConVar sv_walljump_physobj_mass_factor( "sv_walljump_physobj_mass_factor", "1.5", FCVAR_REPLICATED, "factor applied to physics object mass when calculating walljump strength" );
+static ConVar sv_walljump_physobj_push_factor( "sv_walljump_physobj_push_factor", "25", FCVAR_REPLICATED, "factor applied to physics object push" );
 #endif
 
 static Vector ToBBoxEdge2D( Vector origin, const Vector &mins, const Vector &maxs, const Vector &direction )
@@ -2594,30 +2597,46 @@ bool CGameMovement::CheckJumpButton( void )
 			return false;
 		}
 
-		// let's stop some falling velocity
-		if ( mv->m_vecVelocity.z < 0.0f )
-		{
-			// TODO: apply reduction here as well?
-			mv->m_vecVelocity.z += sv_walljump_fall_compensation.GetFloat();
-			if ( mv->m_vecVelocity.z > 0.0f )
-			{
-				mv->m_vecVelocity.z = 0.0f;
-			}
-		}
+		++player->m_Local.m_iWallsJumped;
 
 		// we already give an upwards boost, so dampen the normal a bit
 		tr.plane.normal.z *= sv_walljump_strength_normal_z_factor.GetFloat();
 		tr.plane.normal.NormalizeInPlace();
 
 		Vector vecWalljump = tr.plane.normal * sv_walljump_strength_normal.GetFloat() * physprops->GetSurfaceData( tr.surface.surfaceProps )->GetJumpFactor();
-		for ( int i = player->m_Local.m_iWallsJumped; i != 0; --i )
+		float fallCompensation = sv_walljump_fall_compensation.GetFloat();
+		vecWalljump *= sv_walljump_strength_reduction_factor.GetFloat() * player->m_Local.m_iWallsJumped;
+		fallCompensation *= sv_walljump_fall_compensation_reduction_factor.GetFloat() * player->m_Local.m_iWallsJumped;
+
+		if ( tr.m_pEnt && tr.m_pEnt->VPhysicsGetObject() )
 		{
-			vecWalljump *= sv_walljump_strength_reduction_factor.GetFloat();
+			float mass = tr.m_pEnt->VPhysicsGetObject()->GetMass() * sv_walljump_physobj_mass_factor.GetFloat();
+			if ( vecWalljump.LengthSqr() > mass * mass )
+			{
+				float prevStrength = vecWalljump.NormalizeInPlace();
+				vecWalljump *= mass;
+				// scale fallCompensation proportionally
+				fallCompensation *= mass / prevStrength;
+			}
 		}
+
+		// let's stop some falling velocity
+		if ( mv->m_vecVelocity.z < 0.0f )
+		{
+			mv->m_vecVelocity.z += fallCompensation;
+			if ( mv->m_vecVelocity.z > 0.0f )
+			{
+				mv->m_vecVelocity.z = 0.0f;
+			}
+		}
+
 		mv->m_vecVelocity += vecWalljump;
 		m_vecDirectionBeforeCollision = vec3_origin;
 
-		++player->m_Local.m_iWallsJumped;
+		if ( tr.m_pEnt && tr.m_pEnt->VPhysicsGetObject() )
+		{
+			tr.m_pEnt->VPhysicsGetObject()->ApplyForceOffset( -vecWalljump * sv_walljump_physobj_push_factor.GetFloat(), mv->GetAbsOrigin() );
+		}
 	}
 #endif
 
