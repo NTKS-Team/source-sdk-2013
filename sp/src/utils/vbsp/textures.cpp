@@ -160,6 +160,11 @@ int	FindMiptex (const char *name)
 		textureref[i].flags |= SURF_NOSHADOWS;
 	}
 #endif
+	// MOD_NTKS
+	else if ( ( propVal = GetMaterialVar( matID, "%compileNoWalljump" ) ) && StringIsTrue( propVal ) )
+	{
+		textureref[i].contents |= CONTENTS_NO_WALLJUMP;
+	}
 	else
 	{
 		// HANDLE ALL OF THE STUFF THAT IS RENDERED WITH THE MATERIAL THAT IS ON IT.
