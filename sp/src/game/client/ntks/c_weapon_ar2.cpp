@@ -63,16 +63,18 @@ void RecvProxy_IsIronsighting( const CRecvProxyData *pData, void *pStruct, void 
 	CBasePlayer *pPlayer = ToBasePlayer( pWeapon->GetOwner() );
 	if ( pPlayer )
 	{
-		if ( state )
+		float playbackRate = 1.0f;
+		float fov = pPlayer->GetDefaultFOV();
+		if ( state && pPlayer->GetActiveWeapon() == pWeapon )
 		{
-			pPlayer->GetViewModel()->SetPlaybackRate( 0.0f );
-			pPlayer->SetFOV( pPlayer, pPlayer->GetDefaultFOV() - 33, 0.2f );
+			playbackRate = 0.0f;
+			fov -= 33;
 		}
-		else
+		if ( pPlayer->GetViewModel() )
 		{
-			pPlayer->GetViewModel()->SetPlaybackRate( 1.0f );
-			pPlayer->SetFOV( pPlayer, pPlayer->GetDefaultFOV(), 0.2f );
+			pPlayer->GetViewModel()->SetPlaybackRate( playbackRate );
 		}
+		pPlayer->SetFOV( pPlayer, fov, 0.2f );
 	}
 
 	*(bool *)pOut = state;
