@@ -2591,8 +2591,7 @@ bool CGameMovement::CheckJumpButton( void )
 		}
 
 		// not walljumpable or too flat
-		static const int contents_clip = ( CONTENTS_PLAYERCLIP | CONTENTS_MONSTERCLIP );
-		if ( ( tr.surface.flags & ( SURF_SKY2D | SURF_SKY | SURF_NODRAW ) ) || ( tr.contents & contents_clip ) == contents_clip || fabs( tr.plane.normal.z ) > 0.4f )
+		if ( ( tr.contents & CONTENTS_NO_WALLJUMP ) || fabs( tr.plane.normal.z ) > 0.4f )
 		{
 			return false;
 		}
