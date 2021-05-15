@@ -2381,11 +2381,11 @@ static ConVar sv_walljump_strength_up_factor( "sv_walljump_strength_up_factor", 
 static ConVar sv_walljump_strength_normal( "sv_walljump_strength_normal", "250.0", FCVAR_REPLICATED, "lateral jump strength modifier (based on surface normal) " );
 static ConVar sv_walljump_strength_normal_z_factor( "sv_walljump_strength_normal_z_factor", "0.2", FCVAR_REPLICATED, "surface normal Z dampening" );
 static ConVar sv_walljump_detect_use_bbox( "sv_walljump_detect_use_bbox", "1", FCVAR_REPLICATED, "whether detection happens via box- or line-check" );
-static ConVar sv_walljump_detect_bbox_scale( "sv_walljump_detect_bbox_scale", "0.5", FCVAR_REPLICATED, "scale bounding box of player by this factor for wall detecton" );
+static ConVar sv_walljump_detect_bbox_scale( "sv_walljump_detect_bbox_scale", "0.7", FCVAR_REPLICATED, "scale bounding box of player by this factor for wall detecton" );
 static ConVar sv_walljump_detect_bbox_height( "sv_walljump_detect_bbox_height", "20", FCVAR_REPLICATED, "height of bounding box for wall detecton" );
-static ConVar sv_walljump_detect_move_distance( "sv_walljump_detect_move_distance", "12.0", FCVAR_REPLICATED, "maximum distance from surface to allow walljump detection by movement" );
-static ConVar sv_walljump_detect_previous_momentum_distance( "sv_walljump_detect_previous_momentum_distance", "10.0", FCVAR_REPLICATED, "maximum distance from surface to allow walljump detection by previous momentum" );
-static ConVar sv_walljump_detect_current_momentum_distance( "sv_walljump_detect_current_momentum_distance", "10.0", FCVAR_REPLICATED, "maximum distance from surface to allow walljump detection by current momentum" );
+static ConVar sv_walljump_detect_move_distance( "sv_walljump_detect_move_distance", "18.0", FCVAR_REPLICATED, "maximum distance from surface to allow walljump detection by movement" );
+static ConVar sv_walljump_detect_previous_momentum_distance( "sv_walljump_detect_previous_momentum_distance", "15.0", FCVAR_REPLICATED, "maximum distance from surface to allow walljump detection by previous momentum" );
+static ConVar sv_walljump_detect_current_momentum_distance( "sv_walljump_detect_current_momentum_distance", "15.0", FCVAR_REPLICATED, "maximum distance from surface to allow walljump detection by current momentum" );
 static ConVar sv_walljump_forward_boost_percent( "sv_walljump_forward_boost_percent", "0.3", FCVAR_REPLICATED, "forwards boost modifier" );
 static ConVar sv_walljump_fall_compensation( "sv_walljump_fall_compensation", "220.0", FCVAR_REPLICATED, "nullifies up to that much fall speed" );
 static ConVar sv_walljump_limit( "sv_walljump_limit", "3", FCVAR_REPLICATED, "number of times a walljump can be performed before touching ground again" );
