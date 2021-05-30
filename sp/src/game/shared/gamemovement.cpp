@@ -2692,7 +2692,9 @@ bool CGameMovement::CheckJumpButton( void )
 	if ( player->m_Local.m_iWallsJumped )
 	{
 		flMul *= sv_walljump_strength_up_factor.GetFloat();
-		//TODO: consider sv_walljump_strength_reduction_factor?
+		for ( int i = player->m_Local.m_iWallsJumped; i != 0; --i ) {
+			flMul *= sv_walljump_strength_reduction_factor.GetFloat();
+		}
 	}
 #endif
 
@@ -2731,7 +2733,9 @@ bool CGameMovement::CheckJumpButton( void )
 		if ( !player->m_Local.m_bDucked && player->m_Local.m_iWallsJumped )
 		{
 			flSpeedBoostPerc = sv_walljump_forward_boost_percent.GetFloat();
-			//TODO: consider sv_walljump_strength_reduction_factor?
+			for ( int i = player->m_Local.m_iWallsJumped; i != 0; --i ) {
+				flSpeedBoostPerc *= sv_walljump_strength_reduction_factor.GetFloat();
+			}
 		}
 #endif
 		float flSpeedAddition = fabs( mv->m_flForwardMove * flSpeedBoostPerc );
