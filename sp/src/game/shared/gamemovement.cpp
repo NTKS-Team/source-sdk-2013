@@ -2621,16 +2621,25 @@ bool CGameMovement::CheckJumpButton( void )
 			fallCompensation *= sv_walljump_fall_compensation_reduction_factor.GetFloat();
 		}
 
-		if ( tr.m_pEnt && tr.m_pEnt->VPhysicsGetObject() )
+		if ( tr.m_pEnt )
 		{
-			float mass = tr.m_pEnt->VPhysicsGetObject()->GetMass() * sv_walljump_physobj_mass_factor.GetFloat();
-			if ( vecWalljump.LengthSqr() > mass * mass )
+			if ( tr.m_pEnt->VPhysicsGetObject() )
 			{
-				float prevStrength = vecWalljump.NormalizeInPlace();
-				vecWalljump *= mass;
-				// scale fallCompensation proportionally
-				fallCompensation *= mass / prevStrength;
+				float mass = tr.m_pEnt->VPhysicsGetObject()->GetMass() * sv_walljump_physobj_mass_factor.GetFloat();
+				if ( vecWalljump.LengthSqr() > mass * mass )
+				{
+					float prevStrength = vecWalljump.NormalizeInPlace();
+					vecWalljump *= mass;
+					// scale fallCompensation proportionally
+					fallCompensation *= mass / prevStrength;
+				}
+				tr.m_pEnt->VPhysicsGetObject()->ApplyForceOffset( -vecWalljump * sv_walljump_physobj_push_factor.GetFloat(), mv->GetAbsOrigin() );
 			}
+
+#ifdef GAME_DLL
+			CTakeDamageInfo info( player, player, 1, DMG_CLUB );
+			tr.m_pEnt->TakeDamage( info );
+#endif
 		}
 
 		// let's stop some falling velocity
@@ -2645,11 +2654,6 @@ bool CGameMovement::CheckJumpButton( void )
 
 		mv->m_vecVelocity += vecWalljump;
 		m_vecDirectionBeforeCollision = vec3_origin;
-
-		if ( tr.m_pEnt && tr.m_pEnt->VPhysicsGetObject() )
-		{
-			tr.m_pEnt->VPhysicsGetObject()->ApplyForceOffset( -vecWalljump * sv_walljump_physobj_push_factor.GetFloat(), mv->GetAbsOrigin() );
-		}
 	}
 #endif
 
