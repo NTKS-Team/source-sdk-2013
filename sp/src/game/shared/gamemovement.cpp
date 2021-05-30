@@ -1717,12 +1717,14 @@ static ConVar sv_airspeed( "sv_airspeed", "200.0", FCVAR_REPLICATED );
 float CGameMovement::GetAirSpeedCap( void )
 {
 #ifdef MOD_NTKS
+#if 0
 	// reduce the airspeed when we just walljumped, which pushes the player away from the surface,
 	// usually opposite of where the player was moving
 	if ( player->m_Local.m_iWallsJumped && player->m_Local.m_flJumpTime > GAMEMOVEMENT_JUMP_TIME * sv_walljump_movement_time_delay_factor.GetFloat() )
 	{
-		return sv_airspeed.GetFloat() * ( 1.0f - ( ( player->m_Local.m_flJumpTime * sv_walljump_movement_time_delay_factor.GetFloat() ) / GAMEMOVEMENT_JUMP_TIME ) );
+		return sv_airspeed.GetFloat() * ( ( ( player->m_Local.m_flJumpTime * sv_walljump_movement_time_delay_factor.GetFloat() ) / GAMEMOVEMENT_JUMP_TIME ) );
 	}
+#endif
 	return sv_airspeed.GetFloat();
 #endif
 	return 30.f;
@@ -1738,6 +1740,15 @@ void CGameMovement::AirAccelerate( Vector& wishdir, float wishspeed, float accel
 	int i;
 	float addspeed, accelspeed, currentspeed;
 	float wishspd;
+
+#ifdef MOD_NTKS
+	// reduce the airspeed when we just walljumped, which pushes the player away from the surface,
+	// usually opposite of where the player was moving
+	if ( player->m_Local.m_iWallsJumped && player->m_Local.m_flJumpTime > GAMEMOVEMENT_JUMP_TIME * sv_walljump_movement_time_delay_factor.GetFloat() )
+	{
+		accel *= ( ( player->m_Local.m_flJumpTime * sv_walljump_movement_time_delay_factor.GetFloat() ) / GAMEMOVEMENT_JUMP_TIME );
+	}
+#endif
 
 	wishspd = wishspeed;
 	
