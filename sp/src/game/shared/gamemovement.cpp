@@ -2399,6 +2399,7 @@ static ConVar sv_walljump_detect_previous_momentum_distance( "sv_walljump_detect
 static ConVar sv_walljump_detect_current_momentum_distance( "sv_walljump_detect_current_momentum_distance", "15.0", FCVAR_REPLICATED, "maximum distance from surface to allow walljump detection by current momentum" );
 static ConVar sv_walljump_forward_boost_percent( "sv_walljump_forward_boost_percent", "0.3", FCVAR_REPLICATED, "forwards boost modifier" );
 static ConVar sv_walljump_fall_compensation( "sv_walljump_fall_compensation", "220.0", FCVAR_REPLICATED, "nullifies up to that much fall speed" );
+static ConVar sv_walljump_time_delay_factor( "sv_walljump_time_delay_factor", "0.18", FCVAR_REPLICATED, "factor in [0..1] which delays how early consecutive walljumps are possible" );
 static ConVar sv_walljump_limit( "sv_walljump_limit", "3", FCVAR_REPLICATED, "number of times a walljump can be performed before touching ground again" );
 static ConVar sv_walljump_strength_reduction_factor( "sv_walljump_strength_reduction_factor", "0.75", FCVAR_REPLICATED, "factor to make each consecutive walljump less powerful" );
 static ConVar sv_walljump_fall_compensation_reduction_factor( "sv_walljump_fall_compensation_reduction_factor", "0.9", FCVAR_REPLICATED, "factor to make each consecutive walljump fall compensation less powerful" );
@@ -2508,6 +2509,12 @@ bool CGameMovement::CheckJumpButton( void )
 		{
 			mv->m_nOldButtons |= IN_JUMP;
 			return false;		// in air, so no effect
+		}
+
+		// wait some time after jumping before executing consecutive walljumps
+		if ( player->m_Local.m_iWallsJumped && player->m_Local.m_flJumpTime > GAMEMOVEMENT_JUMP_TIME * ( 1.0f - sv_walljump_time_delay_factor.GetFloat() ) )
+		{
+			return false;
 		}
 
 		Vector vecMoveDirection;
