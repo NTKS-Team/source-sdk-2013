@@ -2621,10 +2621,13 @@ bool CGameMovement::CheckJumpButton( void )
 			fallCompensation *= sv_walljump_fall_compensation_reduction_factor.GetFloat();
 		}
 
+		bool hitPhysProp = false;
+
 		if ( tr.m_pEnt )
 		{
 			if ( tr.m_pEnt->VPhysicsGetObject() )
 			{
+				hitPhysProp = true;
 				float mass = tr.m_pEnt->VPhysicsGetObject()->GetMass() * sv_walljump_physobj_mass_factor.GetFloat();
 				if ( vecWalljump.LengthSqr() > mass * mass )
 				{
@@ -2651,8 +2654,27 @@ bool CGameMovement::CheckJumpButton( void )
 				mv->m_vecVelocity.z = 0.0f;
 			}
 		}
+		// add walljump z - the 2D portion is applied differently
+		mv->m_vecVelocity.z += vecWalljump.z;
 
-		mv->m_vecVelocity += vecWalljump;
+		if ( !hitPhysProp && mv->m_vecVelocity.AsVector2D().Dot(tr.plane.normal.AsVector2D()) < 0.0f )
+		{
+			// to zero out any velocity coming "into" the wall we project the current velocity onto the wall area
+			// swap the 2D normal elements to create that "wall area vector"
+			Vector2D plane = tr.plane.normal.AsVector2D();
+			V_swap( plane.x, plane.y );
+			plane.NormalizeInPlace();
+
+			// project
+			vec_t magnitude = mv->m_vecVelocity.AsVector2D().Dot(plane);
+			Vector2DMA( vecWalljump.AsVector2D(), magnitude, plane, mv->m_vecVelocity.AsVector2D() );
+		}
+		else
+		{
+			// add 2D walljump
+			mv->m_vecVelocity.AsVector2D() += vecWalljump.AsVector2D();
+		}
+
 		m_vecDirectionBeforeCollision = vec3_origin;
 	}
 #endif
