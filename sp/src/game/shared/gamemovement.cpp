@@ -2608,6 +2608,7 @@ bool CGameMovement::CheckJumpButton( void )
 		}
 
 		++player->m_Local.m_iWallsJumped;
+		CategorizeGroundSurface( tr );
 
 		// we already give an upwards boost, so dampen the normal a bit
 		tr.plane.normal.z *= sv_walljump_strength_normal_z_factor.GetFloat();
