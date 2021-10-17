@@ -535,12 +535,37 @@ void FileWeaponInfo_t::Parse( KeyValues *pKeyValuesData, const char *szWeaponNam
 
 #ifdef MOD_NTKS
 FileWeaponInfo_t::CharacterInfo::CharacterInfo()
-	: m_szViewModel{ 0 }
+	: m_flViewmodelRecenterSpeed( 7.5f )
+	, m_flViewmodelRecenterSpeedADS( 2.5f )
+	, m_flViewmodelLag( 1.0f )
+	, m_flViewmodelLagADS( -0.9f )
+	, m_flViewmodelLagMax( 5.0f )
+	, m_flViewmodelLagMaxADS( -2.0f )
+	, m_vecViewmodelPitchAdjust( 0.035f, 0.03f, 0.02f )
 {
+	m_szViewModel[0] = '\0';
 }
 
 void FileWeaponInfo_t::CharacterInfo::Parse( KeyValues *pKeyValuesData )
 {
 	Q_strncpy( m_szViewModel, pKeyValuesData->GetString( "viewmodel" ), sizeof( m_szViewModel ) );
+	KeyValues *pVMLag = pKeyValuesData->FindKey( "viewmodel_lag" );
+	if ( pVMLag )
+	{
+		m_flViewmodelRecenterSpeed    = pVMLag->GetFloat( "recenter_speed", 7.5f );
+		m_flViewmodelRecenterSpeedADS = pVMLag->GetFloat( "recenter_speed_ads", m_flViewmodelRecenterSpeed + 2.5f );
+
+		m_flViewmodelLag    = pVMLag->GetFloat( "lag", 1.0f );
+		m_flViewmodelLagADS = pVMLag->GetFloat( "lag_ads", min( -m_flViewmodelLag + 0.1f, 0.0f ) );
+
+		m_flViewmodelLagMax    = pVMLag->GetFloat( "lag_max", 5.0f );
+		m_flViewmodelLagMaxADS = pVMLag->GetFloat( "lag_max_ads", max( -2.0f, -m_flViewmodelLagMax ) );
+
+		m_vecViewmodelPitchAdjust = Vector(
+			pVMLag->GetFloat( "pitch_f", 0.035f ),
+			pVMLag->GetFloat( "pitch_r", 0.03f ),
+			pVMLag->GetFloat( "pitch_u", 0.02f )
+		);
+	}
 }
 #endif

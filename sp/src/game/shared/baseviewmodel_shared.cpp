@@ -536,6 +536,19 @@ void CBaseViewModel::CalcViewModelView( CBasePlayer *owner, const Vector& eyePos
 //-----------------------------------------------------------------------------
 float g_fMaxViewModelLag = 1.5f;
 
+#ifdef MOD_NTKS
+static ConVar cl_viewmodel_move_base( "cl_viewmodel_move_base", "7.5", FCVAR_REPLICATED, "Speed to re-center the viewmodel" );
+static ConVar cl_viewmodel_move_ironsight( "cl_viewmodel_move_ironsight", "10.0", FCVAR_REPLICATED, "Additional speed to re-center the viewmodel in ironsight" );
+static ConVar cl_viewmodel_lag_base( "cl_viewmodel_lag_base", "1.0", FCVAR_REPLICATED, "Something viewmodel lagging" );
+static ConVar cl_viewmodel_lag_ironsight( "cl_viewmodel_lag_ironsight", "-0.9", FCVAR_REPLICATED, "Something viewmodel lagging, added when ironsighting" );
+static ConVar cl_viewmodel_lag_max( "cl_viewmodel_lag_max", "5.0", FCVAR_REPLICATED, "Maximum viewmodel lag" );
+static ConVar cl_viewmodel_lag_max_ironsight( "cl_viewmodel_lag_max_ironsight", "-2.0", FCVAR_REPLICATED, "Maximum viewmodel lag, added on ironsight" );
+static ConVar cl_viewmodel_pitch_f( "cl_viewmodel_pitch_f", "0.035", FCVAR_REPLICATED, "Viewmodel adjustment for player pitch (forward)" );
+static ConVar cl_viewmodel_pitch_r( "cl_viewmodel_pitch_r", "0.03", FCVAR_REPLICATED, "Viewmodel adjustment for player pitch (right)" );
+static ConVar cl_viewmodel_pitch_u( "cl_viewmodel_pitch_u", "0.02", FCVAR_REPLICATED, "Viewmodel adjustment for player pitch (up)" );
+static ConVar cl_viewmodel_override_character( "cl_viewmodel_override_character", "0", FCVAR_REPLICATED );
+#endif
+
 void CBaseViewModel::CalcViewModelLag( Vector& origin, QAngle& angles, QAngle& original_angles, float blend )
 {
 	Vector vOriginalOrigin = origin;
@@ -547,6 +560,35 @@ void CBaseViewModel::CalcViewModelLag( Vector& origin, QAngle& angles, QAngle& o
 
 	float maxViewModelLag  = g_fMaxViewModelLag;
 
+#ifdef MOD_NTKS
+	//TODO: prettify
+	FileWeaponInfo_t::CharacterInfo info;
+	PlayerCharacter character = GetPlayerCharacter( m_hOwner.Get() );
+	CBaseCombatWeapon *pWeapon = m_hWeapon.Get();
+	
+	if ( character == PC_INVALID || !pWeapon || cl_viewmodel_override_character.GetBool() )
+	{
+		info.m_flViewmodelRecenterSpeed = cl_viewmodel_move_base.GetFloat();
+		info.m_flViewmodelRecenterSpeedADS = cl_viewmodel_move_ironsight.GetFloat();
+
+		info.m_flViewmodelLag = cl_viewmodel_lag_base.GetFloat();
+		info.m_flViewmodelLagADS = cl_viewmodel_lag_ironsight.GetFloat();
+
+		info.m_flViewmodelLagMax = cl_viewmodel_lag_max.GetFloat();
+		info.m_flViewmodelLagMaxADS = cl_viewmodel_lag_max_ironsight.GetFloat();
+
+		info.m_vecViewmodelPitchAdjust = Vector(
+			cl_viewmodel_pitch_f.GetFloat(),
+			cl_viewmodel_pitch_r.GetFloat(),
+			cl_viewmodel_pitch_u.GetFloat()
+		);
+	}
+	else
+	{
+		memcpy( &info, &pWeapon->GetWpnData().characterInfo[character], sizeof( info ) );
+	}
+#endif
+
 	if ( gpGlobals->frametime != 0.0f )
 	{
 		Vector vDifference;
@@ -557,8 +599,8 @@ void CBaseViewModel::CalcViewModelLag( Vector& origin, QAngle& angles, QAngle& o
 		float inverseBlend = 1.0f - blend;
 		if ( cl_alternate_weapon_origin.GetBool() )
 		{
-			flSpeed = 7.5f + 11.5f * inverseBlend;
-			maxViewModelLag = 1.0f - 0.9f * inverseBlend;
+			flSpeed = info.m_flViewmodelRecenterSpeed + info.m_flViewmodelRecenterSpeedADS * inverseBlend;
+			maxViewModelLag = info.m_flViewmodelLag + info.m_flViewmodelLagADS * inverseBlend;
 		}
 		else
 		{
@@ -585,7 +627,7 @@ void CBaseViewModel::CalcViewModelLag( Vector& origin, QAngle& angles, QAngle& o
 		VectorMA( m_vecLastFacing, flSpeed * gpGlobals->frametime, vDifference, m_vecLastFacing );
 		// Make sure it doesn't grow out of control!!!
 		VectorNormalize( m_vecLastFacing );
-		VectorMA( origin, 5.0f, vDifference * -1.0f, origin );
+		VectorMA( origin, info.m_flViewmodelLagMax + info.m_flViewmodelLagMaxADS * inverseBlend, vDifference * -1.0f, origin );
 
 		Assert( m_vecLastFacing.IsValid() );
 	}
@@ -606,9 +648,15 @@ void CBaseViewModel::CalcViewModelLag( Vector& origin, QAngle& angles, QAngle& o
 	}
 
 	//FIXME: These are the old settings that caused too many exposed polys on some models
+#ifdef MOD_NTKS
+	VectorMA( origin, -pitch * info.m_vecViewmodelPitchAdjust.x * blend, forward, origin );
+	VectorMA( origin, -pitch * info.m_vecViewmodelPitchAdjust.y * blend, right,   origin );
+	VectorMA( origin, -pitch * info.m_vecViewmodelPitchAdjust.z * blend, up,      origin );
+#else
 	VectorMA( origin, -pitch * 0.035f * blend,	forward,	origin );
 	VectorMA( origin, -pitch * 0.03f * blend,		right,	origin );
 	VectorMA( origin, -pitch * 0.02f * blend,		up,		origin);
+#endif
 }
 
 //-----------------------------------------------------------------------------
