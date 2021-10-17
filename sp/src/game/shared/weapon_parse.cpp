@@ -568,6 +568,15 @@ FileWeaponInfo_t::CharacterInfo::CharacterInfo()
 void FileWeaponInfo_t::CharacterInfo::Parse( KeyValues *pKeyValuesData )
 {
 	Q_strncpy( m_szViewModel, pKeyValuesData->GetString( "viewmodel" ), sizeof( m_szViewModel ) );
+	float spread = pKeyValuesData->GetFloat( "attack_spread", FLT_MAX );
+	if ( spread == FLT_MAX )
+	{
+		m_vecAttackSpread = vec3_invalid;
+	}
+	else
+	{
+		m_vecAttackSpread = Vector( sin( DEG2RAD( spread * 0.5f ) ) );
+	}
 	KeyValues *pVMLag = pKeyValuesData->FindKey( "viewmodel_lag" );
 	if ( pVMLag )
 	{
