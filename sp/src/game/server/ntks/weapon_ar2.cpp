@@ -189,39 +189,11 @@ CWeaponAR2::CWeaponAR2( )
 	m_fMaxRange2	= 1024;
 
 	m_nShotsFired	= 0;
-	m_nVentPose		= -1;
 
 	m_bIsIronsighting = false;
 	m_flIronsightTime = 0.0f;
 
 	m_bAltFiresUnderwater = false;
-}
-
-//-----------------------------------------------------------------------------
-// Purpose:
-//-----------------------------------------------------------------------------
-void CWeaponAR2::ItemPostFrame( void )
-{
-	// Update our pose parameter for the vents
-	CBasePlayer *pOwner = ToBasePlayer( GetOwner() );
-
-	if ( pOwner )
-	{
-		CBaseViewModel *pVM = pOwner->GetViewModel();
-
-		if ( pVM )
-		{
-			if ( m_nVentPose == -1 )
-			{
-				m_nVentPose = pVM->LookupPoseParameter( "VentPoses" );
-			}
-			
-			float flVentPose = RemapValClamped( m_nShotsFired, 0, 5, 0.0f, 1.0f );
-			pVM->SetPoseParameter( m_nVentPose, flVentPose );
-		}
-	}
-
-	BaseClass::ItemPostFrame();
 }
 
 //-----------------------------------------------------------------------------
