@@ -856,6 +856,10 @@ public:
 
 #ifdef MOD_NTKS
 	PlayerCharacter GetPlayerCharacter();
+
+	// This method is used almost universally (barring the shotgun and the sniperrifle it seems)
+	// which makes this an ideal place to insert our per-character logic
+	Vector GetAttackSpread( CBaseCombatWeapon *pWeapon, CBaseEntity *pTarget = NULL );
 #endif
 private:
 	// How much of a movement time buffer can we process from this user?

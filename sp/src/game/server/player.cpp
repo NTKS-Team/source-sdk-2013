@@ -10368,3 +10368,28 @@ void CBasePlayer::UpdateFXVolume( void )
 	}
 }
 #endif
+
+#ifdef MOD_NTKS
+static ConVar sk_spread_override( "sk_spread_override", "-1", FCVAR_CHEAT, "Override weapon spread." );
+
+Vector CBasePlayer::GetAttackSpread( CBaseCombatWeapon *pWeapon, CBaseEntity *pTarget )
+{
+	float spread_override = sk_spread_override.GetFloat();
+	if ( spread_override >= 0.0f )
+	{
+		return Vector( sin( DEG2RAD( spread_override * 0.5f ) ) );
+	}
+
+	PlayerCharacter character = GetPlayerCharacter();
+	if ( pWeapon && GetPlayerCharacter() != PC_INVALID )
+	{
+		const Vector &spread = pWeapon->GetWpnData().characterInfo[character].m_vecAttackSpread;
+		if ( spread != vec3_invalid )
+		{
+			return spread;
+		}
+	}
+
+	return BaseClass::GetAttackSpread( pWeapon, pTarget );
+}
+#endif

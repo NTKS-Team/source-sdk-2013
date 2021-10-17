@@ -80,6 +80,7 @@ public:
 		void Parse( KeyValues *pKeyValuesData );
 
 		char m_szViewModel[MAX_WEAPON_STRING];
+		Vector m_vecAttackSpread;
 		float m_flViewmodelRecenterSpeed;
 		float m_flViewmodelRecenterSpeedADS;
 		float m_flViewmodelLag;
