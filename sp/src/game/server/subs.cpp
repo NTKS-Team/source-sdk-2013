@@ -66,7 +66,9 @@ END_DATADESC()
 
 // These are the new entry points to entities. 
 LINK_ENTITY_TO_CLASS(info_player_deathmatch,CBaseDMStart);
+#ifndef MOD_NTKS
 LINK_ENTITY_TO_CLASS(info_player_start,CPointEntity);
+#endif
 LINK_ENTITY_TO_CLASS(info_landmark,CPointEntity);
 
 bool CBaseDMStart::IsTriggered( CBaseEntity *pEntity )

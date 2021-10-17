@@ -856,6 +856,9 @@ public:
 		}
 	}
 
+#ifdef MOD_NTKS
+	PlayerCharacter GetPlayerCharacter();
+#endif
 private:
 	// How much of a movement time buffer can we process from this user?
 	float				m_flMovementTimeForUserCmdProcessingRemaining;
@@ -961,6 +964,9 @@ public:
 
 #ifdef MAPBASE
 	CNetworkVar( bool, m_bInTriggerFall );
+#endif
+#ifdef MOD_NTKS
+	CNetworkVar( PlayerCharacter, m_iPlayerCharacter );
 #endif
 
 private:

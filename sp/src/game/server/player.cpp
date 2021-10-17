@@ -94,6 +94,10 @@
 #include "mapbase/vscript_funcs_shared.h"
 #endif
 
+#ifdef MOD_NTKS
+#include "ntks/info_player_start.h"
+#endif
+
 ConVar autoaim_max_dist( "autoaim_max_dist", "2160" ); // 2160 = 180 feet
 ConVar autoaim_max_deflect( "autoaim_max_deflect", "0.99" );
 
@@ -493,6 +497,9 @@ BEGIN_DATADESC( CBasePlayer )
 
 	// DEFINE_UTLVECTOR( m_vecPlayerCmdInfo ),
 	// DEFINE_UTLVECTOR( m_vecPlayerSimInfo ),
+#ifdef MOD_NTKS
+	DEFINE_FIELD( m_iPlayerCharacter, FIELD_INTEGER ),
+#endif
 END_DATADESC()
 
 #ifdef MAPBASE_VSCRIPT
@@ -5272,6 +5279,19 @@ void CBasePlayer::Spawn( void )
 #ifdef MAPBASE
 	CBaseEntity *pSpawnPoint = g_pGameRules->GetPlayerSpawnSpot( this );
 	SpawnedAtPoint( pSpawnPoint );
+
+#ifdef MOD_NTKS
+	CNtksStart *pNtksStart = dynamic_cast<CNtksStart*>( pSpawnPoint );
+	if ( pNtksStart )
+	{
+		m_iPlayerCharacter = pNtksStart->m_iPlayerCharacter;
+	}
+	else
+	{
+		AssertMsg( false, "SpawnPoint '%s' is not a CNtksStart", pSpawnPoint->GetDebugName() );
+		m_iPlayerCharacter = PC_INVALID; //(PlayerCharacter)0;
+	}
+#endif
 #else
 	g_pGameRules->GetPlayerSpawnSpot( this );
 #endif
@@ -5517,6 +5537,22 @@ int CBasePlayer::Restore( IRestore &restore )
 		SetLocalOrigin( pSpawnSpot->GetLocalOrigin() + Vector(0,0,1) );
 		SetLocalAngles( pSpawnSpot->GetLocalAngles() );
 	}
+
+#ifdef MOD_NTKS
+#if 1
+	CBaseEntity *pSpawnPoint = EntSelectSpawnPoint();
+	CNtksStart *pNtksStart = dynamic_cast<CNtksStart*>( pSpawnPoint );
+	if ( pNtksStart )
+	{
+		m_iPlayerCharacter = pNtksStart->m_iPlayerCharacter;
+	}
+	else
+	{
+		AssertMsg( false, "SpawnPoint '%s' is not a CNtksStart", pSpawnPoint->GetDebugName() );
+		m_iPlayerCharacter = PC_INVALID;
+	}
+#endif
+#endif
 
 	QAngle newViewAngles = pl.v_angle;
 	newViewAngles.z = 0;	// Clear out roll
@@ -8784,6 +8820,9 @@ void SendProxy_ShiftPlayerSpawnflags( const SendProp *pProp, const void *pStruct
 
 		SendPropBool		( SENDINFO( m_bDrawPlayerModelExternally ) ),
 		SendPropBool		( SENDINFO( m_bInTriggerFall ) ),
+#endif
+#ifdef MOD_NTKS
+		SendPropInt			( SENDINFO( m_iPlayerCharacter ), 2 ),
 #endif
 
 	END_SEND_TABLE()

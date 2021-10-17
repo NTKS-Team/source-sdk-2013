@@ -283,6 +283,9 @@ END_RECV_TABLE()
 		RecvPropBool		( RECVINFO( m_bDrawPlayerModelExternally ) ),
 		RecvPropBool		( RECVINFO( m_bInTriggerFall ) ),
 #endif
+#ifdef MOD_NTKS
+		RecvPropInt			( RECVINFO( m_iPlayerCharacter ) ),
+#endif
 
 	END_RECV_TABLE()
 

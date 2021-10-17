@@ -131,6 +131,8 @@ $Project "Client (NTKS)"
 		$Folder	"NTKS"
 		{
 			$File	"ntks\c_weapon_ar2.cpp"
+			$File	"$SRCDIR\game\shared\ntks\player_character_stats.h"
+			$File	"$SRCDIR\game\shared\ntks\player_character_stats.cpp"
 		}
 	}
 	
