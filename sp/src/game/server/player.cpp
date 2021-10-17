@@ -3831,7 +3831,7 @@ void CBasePlayer::PlayerRunCommand(CUserCmd *ucmd, IMoveHelper *moveHelper)
 	// Movement hook for VScript
 	if (m_ScriptScope.IsInitialized() && g_Hook_PlayerRunCommand.CanRunInScope(m_ScriptScope))
 	{
-		HSCRIPT hCmd = g_pScriptVM->RegisterInstance( ucmd );
+		HSCRIPT hCmd = g_pScriptVM->RegisterInstance( reinterpret_cast<CScriptUserCmd*>(ucmd) );
 
 		// command
 		ScriptVariant_t args[] = { hCmd };
@@ -8688,6 +8688,7 @@ void SendProxy_ShiftPlayerSpawnflags( const SendProp *pProp, const void *pStruct
 		SendPropInt			( SENDINFO( m_spawnflags ), 3, SPROP_UNSIGNED, SendProxy_ShiftPlayerSpawnflags ),
 
 		SendPropBool		( SENDINFO( m_bDrawPlayerModelExternally ) ),
+		SendPropBool		( SENDINFO( m_bInTriggerFall ) ),
 #endif
 
 	END_SEND_TABLE()

@@ -610,7 +610,7 @@ public:
 #ifdef MAPBASE_VSCRIPT
 	void ScriptFireOutput( const char *pszOutput, HSCRIPT hActivator, HSCRIPT hCaller, const char *szValue, float flDelay );
 	float GetMaxOutputDelay( const char *pszOutput );
-	void CancelEventsByInput( const char *szInput );
+	//void CancelEventsByInput( const char *szInput );
 #endif
 
 
@@ -693,6 +693,9 @@ public:
 #endif
 
 	bool ScriptInputHook( const char *szInputName, CBaseEntity *pActivator, CBaseEntity *pCaller, variant_t Value, ScriptVariant_t &functionReturn );
+#ifdef MAPBASE_VSCRIPT
+	bool ScriptDeathHook( CTakeDamageInfo *info );
+#endif
 
 	//
 	// Input handlers.
@@ -1090,7 +1093,7 @@ public:
 	void SendOnKilledGameEvent( const CTakeDamageInfo &info );
 
 	// Notifier that I've killed some other entity. (called from Victim's Event_Killed).
-	virtual void	Event_KilledOther( CBaseEntity *pVictim, const CTakeDamageInfo &info ) { return; }
+	virtual void	Event_KilledOther( CBaseEntity *pVictim, const CTakeDamageInfo &info );
 
 	// UNDONE: Make this data?
 	virtual int				BloodColor( void );
@@ -1534,6 +1537,12 @@ public:
 	void					GenderExpandString( char const *in, char *out, int maxlen );
 
 	virtual void ModifyEmitSoundParams( EmitSound_t &params );
+#ifdef MAPBASE
+	// Same as above, but for sentences
+	// (which don't actually have EmitSound_t params)
+	virtual void ModifySentenceParams( int &iSentenceIndex, int &iChannel, float &flVolume, soundlevel_t &iSoundlevel, int &iFlags, int &iPitch,
+		const Vector **pOrigin, const Vector **pDirection, bool &bUpdatePositions, float &soundtime, int &iSpecialDSP, int &iSpeakerIndex );
+#endif
 
 	static float GetSoundDuration( const char *soundname, char const *actormodel );
 
@@ -2145,10 +2154,15 @@ public:
 	void ScriptSetTakeDamage( int val ) { m_takedamage = val; }
 
 	static ScriptHook_t	g_Hook_UpdateOnRemove;
+	static ScriptHook_t	g_Hook_OnEntText;
+
 	static ScriptHook_t	g_Hook_VPhysicsCollision;
 	static ScriptHook_t	g_Hook_FireBullets;
 	static ScriptHook_t	g_Hook_OnDeath;
+	static ScriptHook_t	g_Hook_OnKilledOther;
 	static ScriptHook_t	g_Hook_HandleInteraction;
+	static ScriptHook_t	g_Hook_ModifyEmitSoundParams;
+	static ScriptHook_t	g_Hook_ModifySentenceParams;
 #endif
 
 	string_t		m_iszVScripts;

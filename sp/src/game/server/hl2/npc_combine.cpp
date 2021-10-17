@@ -230,7 +230,9 @@ DEFINE_INPUTFUNC( FIELD_STRING, "SetPoliceGoal", InputSetPoliceGoal ),
 DEFINE_AIGRENADE_DATADESC()
 #endif
 
+#ifndef MAPBASE
 DEFINE_FIELD( m_iLastAnimEventHandled, FIELD_INTEGER ),
+#endif
 DEFINE_FIELD( m_fIsElite, FIELD_BOOLEAN ),
 #ifndef MAPBASE
 DEFINE_FIELD( m_vecAltFireTarget, FIELD_VECTOR ),
@@ -1556,6 +1558,13 @@ Activity CNPC_Combine::NPC_BackupActivity( Activity eNewActivity )
 		return ACT_WALK_UNARMED;
 	else if (eNewActivity == ACT_RUN)
 		return ACT_RUN_RIFLE;
+
+	// Some models might not contain ACT_COMBINE_BUGBAIT, which the soldier model uses instead of ACT_IDLE_ON_FIRE.
+	// Contrariwise, soldiers may be called to use ACT_IDLE_ON_FIRE in other parts of the AI and need to translate to ACT_COMBINE_BUGBAIT.
+	if (eNewActivity == ACT_COMBINE_BUGBAIT)
+		return ACT_IDLE_ON_FIRE;
+	else if (eNewActivity == ACT_IDLE_ON_FIRE)
+		return ACT_COMBINE_BUGBAIT;
 
 	return BaseClass::NPC_BackupActivity( eNewActivity );
 }
@@ -3680,7 +3689,9 @@ void CNPC_Combine::SetActivity( Activity NewActivity )
 {
 	BaseClass::SetActivity( NewActivity );
 
+#ifndef MAPBASE // CAI_GrenadeUser
 	m_iLastAnimEventHandled = -1;
+#endif
 }
 
 //-----------------------------------------------------------------------------

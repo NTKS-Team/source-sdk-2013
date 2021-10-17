@@ -3015,7 +3015,16 @@ void CAI_BaseNPC::StartTask( const Task_t *pTask )
 
 	case TASK_ITEM_PICKUP:
 		{
-			SetIdealActivity( ACT_PICKUP_GROUND );
+#ifdef MAPBASE
+			if (GetTarget() && fabs( GetTarget()->WorldSpaceCenter().z - GetAbsOrigin().z ) >= 12.0f)
+			{
+				SetIdealActivity( ACT_PICKUP_RACK );
+			}
+			else
+#endif
+			{
+				SetIdealActivity( ACT_PICKUP_GROUND );
+			}
 		}
 		break;
 
@@ -3979,10 +3988,16 @@ void CAI_BaseNPC::RunTask( const Task_t *pTask )
 				// If we have an entry, we have to play it first
 				if ( m_hCine->m_iszEntry != NULL_STRING )
 				{
+#ifdef MAPBASE
+					m_hCine->OnEntrySequence( this );
+#endif
 					m_hCine->StartSequence( (CAI_BaseNPC *)this, m_hCine->m_iszEntry, true );
 				}
 				else
 				{
+#ifdef MAPBASE
+					m_hCine->OnActionSequence( this );
+#endif
 					m_hCine->StartSequence( (CAI_BaseNPC *)this, m_hCine->m_iszPlay, true );
 				}
 

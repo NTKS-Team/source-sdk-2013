@@ -261,6 +261,7 @@ BEGIN_DATADESC( CNPC_MetroPolice )
 #ifdef MAPBASE
 	DEFINE_AIGRENADE_DATADESC()
 	DEFINE_INPUT( m_iGrenadeCapabilities, FIELD_INTEGER, "SetGrenadeCapabilities" ),
+	DEFINE_INPUT( m_iGrenadeDropCapabilities, FIELD_INTEGER, "SetGrenadeDropCapabilities" ),
 #endif
 
 END_DATADESC()
@@ -517,6 +518,11 @@ CNPC_MetroPolice::CNPC_MetroPolice()
 {
 #ifdef MAPBASE
 	m_iGrenadeCapabilities = GRENCAP_GRENADE;
+
+	if (ai_grenade_always_drop.GetBool())
+	{
+		m_iGrenadeDropCapabilities = (eGrenadeDropCapabilities)(GRENDROPCAP_GRENADE | GRENDROPCAP_ALTFIRE | GRENDROPCAP_INTERRUPTED);
+	}
 #endif
 }
 
@@ -882,7 +888,7 @@ void CNPC_MetroPolice::SpeakStandoffSentence( int nSentenceType )
 		break;
 
 	case STANDOFF_SENTENCE_FORCED_TAKE_COVER:
-		SpeakIfAllowed( TLK_COP_SO_END );
+		SpeakIfAllowed( TLK_COP_SO_FORCE_COVER );
 		break;
 
 	case STANDOFF_SENTENCE_STAND_CHECK_TARGET:
@@ -1008,7 +1014,12 @@ void CNPC_MetroPolice::SpeakSentence( int nSentenceType )
 			return;
 		}
 
+#ifdef MAPBASE
+		// Fixed issues with standoff sentences not playing when they should
+		if ( m_StandoffBehavior.IsActive() )
+#else
 		if ( GetRunningBehavior() == &m_StandoffBehavior )
+#endif
 		{
 			SpeakStandoffSentence( nSentenceType );
 			return;
@@ -3676,6 +3687,11 @@ void CNPC_MetroPolice::Event_Killed( const CTakeDamageInfo &info )
 			DropItem( "item_healthvial", WorldSpaceCenter()+RandomVector(-4,4), RandomAngle(0,360) );
 			pHL2GameRules->NPC_DroppedHealth();
 		}
+
+#ifdef MAPBASE
+		// Drop grenades if we should
+		DropGrenadeItemsOnDeath( info, pPlayer );
+#endif
 	}
 
 	BaseClass::Event_Killed( info );
@@ -4929,7 +4945,12 @@ int CNPC_MetroPolice::SelectSchedule( void )
 	// This will cause the cops to run backwards + shoot at the same time
 	if ( !bHighHealth && !HasBaton() )
 	{
+#ifdef MAPBASE
+		// Don't do this with the 357 or any weapons which don't use clips
+		if ( GetActiveWeapon() && GetActiveWeapon()->UsesClipsForAmmo1() && GetActiveWeapon()->m_iClassname != gm_isz_class_357 && (GetActiveWeapon()->m_iClip1 <= 5) )
+#else
 		if ( GetActiveWeapon() && (GetActiveWeapon()->m_iClip1 <= 5) )
+#endif
 		{
 #ifdef METROPOLICE_USES_RESPONSE_SYSTEM
 			SpeakIfAllowed( TLK_COP_LOWAMMO );

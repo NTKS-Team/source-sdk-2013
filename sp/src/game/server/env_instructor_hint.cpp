@@ -32,7 +32,6 @@ public:
 	virtual ~CEnvInstructorHint( void ) {}
 
 #ifdef MAPBASE
-	virtual void Spawn( void );
 	virtual void OnRestore( void );
 #endif
 
@@ -66,7 +65,7 @@ private:
 #ifdef MAPBASE
 	string_t	m_iszStartSound;
 	int			m_iHintTargetPos;
-	bool		m_bActive;
+	float		m_flActiveUntil;
 	CHandle<CBasePlayer>	m_hActivator;
 	EHANDLE		m_hTarget;
 	bool		m_bFilterByActivator;
@@ -99,8 +98,8 @@ BEGIN_DATADESC( CEnvInstructorHint )
 #ifdef MAPBASE
 	DEFINE_KEYFIELD( m_iszStartSound, FIELD_STRING, "hint_start_sound" ),
 	DEFINE_KEYFIELD( m_iHintTargetPos, FIELD_INTEGER, "hint_target_pos" ),
-	DEFINE_KEYFIELD( m_bActive, FIELD_BOOLEAN, "start_active" ),
 
+	DEFINE_FIELD( m_flActiveUntil, FIELD_TIME ),
 	DEFINE_FIELD( m_hActivator, FIELD_EHANDLE ),
 	DEFINE_FIELD( m_hTarget, FIELD_EHANDLE ),
 	DEFINE_FIELD( m_bFilterByActivator, FIELD_BOOLEAN ),
@@ -129,28 +128,32 @@ CEnvInstructorHint::CEnvInstructorHint( void )
 	m_hActivator = NULL;
 	m_hTarget = NULL;
 	m_bFilterByActivator = false;
-}
-
-//-----------------------------------------------------------------------------
-//-----------------------------------------------------------------------------
-void CEnvInstructorHint::Spawn( void )
-{
-	if ( m_bActive )
-	{
-		inputdata_t inputdata;
-		InputShowHint( inputdata );
-	}
+	m_flActiveUntil = -1.0f;
 }
 
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
 void CEnvInstructorHint::OnRestore( void )
 {
-	if ( m_bActive )
+	int iTimeLeft = 0;
+	if ( m_flActiveUntil < 0.0f )
 	{
-		inputdata_t inputdata;
-		InputShowHint( inputdata );
+		return;
 	}
+	if ( m_iTimeout != 0 )
+	{
+		iTimeLeft = static_cast<int>( m_flActiveUntil - gpGlobals->curtime );
+		if ( iTimeLeft <= 0 )
+		{
+			return;
+		}
+	}
+
+	int iOriginalTimeout = m_iTimeout;
+	m_iTimeout = iTimeLeft;
+	inputdata_t inputdata;
+	InputShowHint( inputdata );
+	m_iTimeout = iOriginalTimeout;
 }
 #endif
 
@@ -261,7 +264,7 @@ void CEnvInstructorHint::InputShowHint( inputdata_t &inputdata )
 		gameeventmanager->FireEvent( event );
 
 #ifdef MAPBASE
-		m_bActive = true;
+		m_flActiveUntil = gpGlobals->curtime + m_iTimeout;
 		m_hTarget = pTargetEntity;
 		m_hActivator = pActivator;
 		m_bFilterByActivator = bFilterByActivator;
@@ -281,7 +284,7 @@ void CEnvInstructorHint::InputEndHint( inputdata_t &inputdata )
 		gameeventmanager->FireEvent( event );
 
 #ifdef MAPBASE
-		m_bActive = false;
+		m_flActiveUntil = -1.0f;
 		m_hActivator = NULL;
 		m_hTarget = NULL;
 		m_bFilterByActivator = false;
