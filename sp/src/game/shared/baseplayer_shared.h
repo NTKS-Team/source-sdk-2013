@@ -67,12 +67,30 @@ void CopySoundNameWithModifierToken( char *pchDest, const char *pchSource, int n
 #define SF_PLAYER_SUPPRESS_FIRING	(1 << 18)
 #endif
 
+#ifdef MOD_NTKS
+enum PlayerCharacter
+{
+	PC_INVALID = -1,
+	PC_ISAAC,
+	PC_KATSU,
+	PC_MAX
+};
+#endif
+
 // Shared header file for players
 #if defined( CLIENT_DLL )
 #define CBasePlayer C_BasePlayer
 #include "c_baseplayer.h"
 #else
 #include "player.h"
+#endif
+
+#ifdef MOD_NTKS
+static PlayerCharacter GetPlayerCharacter( CBaseEntity *pEnt )
+{
+	CBasePlayer *pPlayer = ToBasePlayer( pEnt );
+	return pPlayer ? pPlayer->GetPlayerCharacter() : PC_INVALID;
+}
 #endif
 
 #endif // BASEPLAYER_SHARED_H

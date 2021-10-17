@@ -2086,3 +2086,24 @@ bool fogparams_t::operator !=( const fogparams_t& other ) const
 	return false;
 }
 
+#ifdef MOD_NTKS
+static ConVar player_character_override( "player_character_override", "-1", FCVAR_CHEAT | FCVAR_REPLICATED );
+
+PlayerCharacter CBasePlayer::GetPlayerCharacter( void )
+{
+	if ( player_character_override.GetInt() != -1 )
+	{
+		int characterOverride = player_character_override.GetInt();
+		if ( characterOverride < 0 || characterOverride >= PC_MAX )
+		{
+			Warning( "Invalid player-character %s\n", player_character_override.GetString() );
+			player_character_override.SetValue( "-1" );
+		}
+		else
+		{
+			return (PlayerCharacter)player_character_override.GetInt();
+		}
+	}
+	return m_iPlayerCharacter;
+}
+#endif

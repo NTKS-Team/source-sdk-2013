@@ -413,6 +413,10 @@ public:
 	void					SetFiredWeapon( bool bFlag ) { m_bFiredWeapon = bFlag; }
 
 	virtual bool			CanUseFirstPersonCommand( void ){ return true; }
+
+#ifdef MOD_NTKS
+	PlayerCharacter GetPlayerCharacter();
+#endif
 	
 protected:
 	fogparams_t				m_CurrentFog;
@@ -590,6 +594,10 @@ private:
 	CSmartPtr<WaterDebrisEffect>	m_pWaterEmitter;
 
 	bool							m_bPlayerUnderwater;
+
+#ifdef MOD_NTKS
+	CNetworkVar( PlayerCharacter, m_iPlayerCharacter );
+#endif
 
 	friend class CPrediction;
 

@@ -11,6 +11,10 @@
 #include "utldict.h"
 #include "ammodef.h"
 
+#ifdef MOD_NTKS
+#include "player_character_stats.h"
+#endif
+
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
 
@@ -516,5 +520,27 @@ void FileWeaponInfo_t::Parse( KeyValues *pKeyValuesData, const char *szWeaponNam
 			}
 		}
 	}
+
+#ifdef MOD_NTKS
+	for ( size_t i = 0; i < PC_MAX; ++i )
+	{
+		KeyValues *pCharacterData = pKeyValuesData->FindKey( PlayerCharacterStats::Get( (PlayerCharacter)i ).m_szWeaponDataKey );
+		if ( pCharacterData )
+		{
+			characterInfo[i].Parse( pCharacterData );
+		}
+	}
+#endif
 }
 
+#ifdef MOD_NTKS
+FileWeaponInfo_t::CharacterInfo::CharacterInfo()
+	: m_szViewModel{ 0 }
+{
+}
+
+void FileWeaponInfo_t::CharacterInfo::Parse( KeyValues *pKeyValuesData )
+{
+	Q_strncpy( m_szViewModel, pKeyValuesData->GetString( "viewmodel" ), sizeof( m_szViewModel ) );
+}
+#endif

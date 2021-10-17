@@ -422,6 +422,10 @@ public:
 	virtual bool			UsesClipsForAmmo2( void ) const;
 	bool					IsMeleeWeapon() const;
 
+#ifdef MOD_NTKS
+	virtual const char		*GetViewModelForCharacter( PlayerCharacter character ) const;
+#endif
+
 	// derive this function if you mod uses encrypted weapon info files
 	virtual const unsigned char *GetEncryptionKey( void );
 
