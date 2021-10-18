@@ -19,11 +19,6 @@ jobs:
     steps:
     - uses: actions/checkout@v2
 
-    - name: Install VS 2012
-      uses: crazy-max/ghaction-chocolatey@v1
-      with:
-        args: install visualstudio2012-update
-
     - name: Add MSBuild to PATH
       uses: microsoft/setup-msbuild@v1
       with:
@@ -32,8 +27,9 @@ jobs:
     - name: Create projectfiles
       working-directory: sp/src
       shell: cmd
-      # reg add "HKLM\SOFTWARE\WOW6432Node\Microsoft\VisualStudio\12.0\Projects\{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}" /v DefaultProjectExtension /t REG_SZ /d vcproj /f
+      # https://github.com/ValveSoftware/source-sdk-2013/issues/72
       run: |
+        reg add "HKLM\SOFTWARE\WOW6432Node\Microsoft\VisualStudio\10.0\Projects\{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}" /v DefaultProjectExtension /t REG_SZ /d vcproj /f
         creategameprojects.bat
 
     - name: Build
