@@ -201,7 +201,7 @@ void CWeaponAR2::ItemPostFrame( void )
 //-----------------------------------------------------------------------------
 void CWeaponAR2::SecondaryAttack( void )
 {
-	CBasePlayer *pPlayer = ToBasePlayer( GetOwner() );
+	CHL2_Player *pPlayer = assert_cast<CHL2_Player*>( ToBasePlayer( GetOwner() ) );
 	if ( !pPlayer || !( pPlayer->m_afButtonPressed & IN_ATTACK2 ) )
 	{
 		return;
@@ -215,6 +215,7 @@ void CWeaponAR2::SecondaryAttack( void )
 		}
 		m_bIsIronsighting = false;
 		pPlayer->ShowCrosshair( true );
+		pOwner->EnableSprint( true );
 	}
 	else
 	{
@@ -224,6 +225,7 @@ void CWeaponAR2::SecondaryAttack( void )
 		}
 		m_bIsIronsighting = true;
 		pPlayer->ShowCrosshair( false );
+		pOwner->EnableSprint( false );
 	}
 
 	m_flIronsightTime = gpGlobals->curtime;
@@ -232,7 +234,7 @@ void CWeaponAR2::SecondaryAttack( void )
 
 void CWeaponAR2::DisableIronsights( void )
 {
-	CBasePlayer *pPlayer = ToBasePlayer( GetOwner() );
+	CBasePlayer *pPlayer = assert_cast<CHL2_Player*>( ToBasePlayer( GetOwner() ) );
 	if ( !pPlayer || !m_bIsIronsighting )
 	{
 		return;
@@ -241,6 +243,7 @@ void CWeaponAR2::DisableIronsights( void )
 	m_bIsIronsighting = false;
 	pPlayer->SetFOV( pPlayer, pPlayer->GetDefaultFOV(), 0.3f );
 	pPlayer->ShowCrosshair( true );
+	pPlayer->EnableSprint( true );
 }
 
 bool CWeaponAR2::Holster( CBaseCombatWeapon *pSwitchingTo )
