@@ -2614,7 +2614,7 @@ bool CGameMovement::CheckJumpButton( void )
 		tr.plane.normal.z *= sv_walljump_strength_normal_z_factor.GetFloat();
 		tr.plane.normal.NormalizeInPlace();
 
-		Vector vecWalljump = tr.plane.normal * sv_walljump_strength_normal.GetFloat() * physprops->GetSurfaceData( tr.surface.surfaceProps )->GetJumpFactor();
+		Vector vecWalljump = tr.plane.normal * sv_walljump_strength_normal.GetFloat() * physprops->GetSurfaceData( tr.surface.surfaceProps )->game.jumpFactor;
 		float fallCompensation = sv_walljump_fall_compensation.GetFloat();
 		for ( int i = player->m_Local.m_iWallsJumped; i != 0; --i ) {
 			vecWalljump *= sv_walljump_strength_reduction_factor.GetFloat();
@@ -2636,11 +2636,10 @@ bool CGameMovement::CheckJumpButton( void )
 					// scale fallCompensation proportionally
 					fallCompensation *= mass / prevStrength;
 				}
-				tr.m_pEnt->VPhysicsGetObject()->ApplyForceOffset( -vecWalljump * sv_walljump_physobj_push_factor.GetFloat(), mv->GetAbsOrigin() );
 			}
 
 #ifdef GAME_DLL
-			CTakeDamageInfo info( player, player, 1, DMG_CLUB );
+			CTakeDamageInfo info( player, player, -vecWalljump * sv_walljump_physobj_push_factor.GetFloat(), mv->GetAbsOrigin(), 1, DMG_CLUB );
 			tr.m_pEnt->TakeDamage( info );
 #endif
 		}
