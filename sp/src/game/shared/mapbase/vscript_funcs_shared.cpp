@@ -775,7 +775,27 @@ static void AddPhysVelocity( HSCRIPT hPhys, const Vector& vecVelocity, const Vec
 //=============================================================================
 //=============================================================================
 
-#ifndef CLIENT_DLL
+#ifdef CLIENT_DLL
+static int ScriptPrecacheModel( const char *modelname )
+{
+	return CBaseEntity::PrecacheModel( modelname );
+}
+
+static void ScriptPrecacheOther( const char *classname )
+{
+	UTIL_PrecacheOther( classname );
+}
+#else
+static int ScriptPrecacheModel( const char *modelname, bool bPreload )
+{
+	return CBaseEntity::PrecacheModel( modelname, bPreload );
+}
+
+static void ScriptPrecacheOther( const char *classname, const char *modelName )
+{
+	UTIL_PrecacheOther( classname, modelName );
+}
+
 // TODO: Move this?
 static void ScriptInsertSound( int iType, const Vector &vecOrigin, int iVolume, float flDuration, HSCRIPT hOwner, int soundChannelIndex, HSCRIPT hSoundTarget )
 {
@@ -996,10 +1016,10 @@ void RegisterSharedScriptFunctions()
 	// 
 	// Precaching
 	// 
-	ScriptRegisterFunctionNamed( g_pScriptVM, CBaseEntity::PrecacheModel, "PrecacheModel", "Precaches a model for later usage." );
+	ScriptRegisterFunctionNamed( g_pScriptVM, ScriptPrecacheModel, "PrecacheModel", "Precaches a model for later usage." );
 	ScriptRegisterFunction( g_pScriptVM, PrecacheMaterial, "Precaches a material for later usage." );
 	ScriptRegisterFunction( g_pScriptVM, PrecacheParticleSystem, "Precaches a particle system for later usage." );
-	ScriptRegisterFunctionNamed( g_pScriptVM, UTIL_PrecacheOther, "PrecacheOther", "Precaches an entity class for later usage." );
+	ScriptRegisterFunctionNamed( g_pScriptVM, ScriptPrecacheOther, "PrecacheOther", "Precaches an entity class for later usage." );
 
 	// 
 	// NPCs

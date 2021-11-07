@@ -23,6 +23,7 @@
 #endif
 
 #ifdef MAPBASE
+#include "ai_behavior_functank.h"
 #include "mapbase/ai_grenade.h"
 #endif
 
@@ -435,6 +436,9 @@ protected:
 	CAI_OperatorBehavior			m_OperatorBehavior;
 	CAI_PassengerBehaviorCompanion	m_PassengerBehavior;
 	CAI_FearBehavior				m_FearBehavior;
+#endif
+#ifdef MAPBASE
+	CAI_FuncTankBehavior			m_FuncTankBehavior;
 #endif
 	//-----------------------------------------------------
 

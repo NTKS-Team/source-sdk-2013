@@ -2603,6 +2603,27 @@ void CMapFile::MergeEntities( entity_t *pInstanceEntity, CMapFile *Instance, Vec
 						SetKeyValue( entity, szKey, epInstance->value );
 					}
 				}
+
+				// If the parent instance is within a relative path and no file relative to the main map exists, change it to be relative to the parent
+				char *pParentInstanceFile = ValueForKey( pInstanceEntity, "file" );
+				if ( pParentInstanceFile[ 0 ] && (strchr( pParentInstanceFile, '\\' ) || strchr( pParentInstanceFile, '/' )) )
+				{
+					char *pInstanceFile = ValueForKey( entity, "file" );
+					if ( pInstanceFile[ 0 ] )
+					{
+						char	InstancePath[ MAX_PATH ];
+
+						if ( !DeterminePath( g_MainMapPath, pInstanceFile, InstancePath ) )
+						{
+							strcpy( InstancePath, pParentInstanceFile );
+							V_StripFilename( InstancePath );
+							V_strncat( InstancePath, "\\", sizeof( InstancePath ) );
+							V_strncat( InstancePath, pInstanceFile, sizeof( InstancePath ) );
+
+							SetKeyValue( entity, "file", InstancePath );
+						}
+					}
+				}
 			}
 #endif
 		}
@@ -2806,14 +2827,12 @@ bool LoadMapFile( const char *pszFileName )
 #ifdef MAPBASE_VSCRIPT
 		if ( g_pScriptVM )
 		{
-			HSCRIPT hFunc = g_pScriptVM->LookupFunction( "OnMapLoaded" );
-			if ( hFunc )
+			if (CMapFile::g_Hook_OnMapLoaded.CanRunInScope( NULL ))
 			{
 				// Use GetLoadingMap()
 				//g_pScriptVM->SetValue( "map", g_LoadingMap->GetScriptInstance() );
 
-				g_pScriptVM->Call( hFunc );
-				g_pScriptVM->ReleaseFunction( hFunc );
+				CMapFile::g_Hook_OnMapLoaded.Call( NULL, NULL, NULL );
 
 				//g_pScriptVM->ClearValue( "map" );
 			}

@@ -4049,7 +4049,10 @@ Vector CHL2_Player::EyeDirection2D( void )
 Vector CHL2_Player::EyeDirection3D( void )
 {
 	Vector vecForward;
-
+#ifdef MAPBASE
+	EyeVectors( &vecForward );
+	return vecForward;
+#else
 	// Return the vehicle angles if we request them
 	if ( GetVehicle() != NULL )
 	{
@@ -4060,6 +4063,7 @@ Vector CHL2_Player::EyeDirection3D( void )
 	
 	AngleVectors( EyeAngles(), &vecForward );
 	return vecForward;
+#endif
 }
 
 
