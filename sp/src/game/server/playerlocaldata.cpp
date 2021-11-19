@@ -33,6 +33,11 @@ BEGIN_SEND_TABLE_NOBASE( CPlayerLocalData, DT_Local )
 	SendPropFloat	(SENDINFO(m_flDucktime), 12, SPROP_ROUNDDOWN|SPROP_CHANGES_OFTEN, 0.0f, 2048.0f ),
 	SendPropFloat	(SENDINFO(m_flDuckJumpTime), 12, SPROP_ROUNDDOWN, 0.0f, 2048.0f ),
 	SendPropFloat	(SENDINFO(m_flJumpTime), 12, SPROP_ROUNDDOWN, 0.0f, 2048.0f ),
+#ifdef MOD_NTKS
+	SendPropInt		(SENDINFO(m_iWallsJumped), 3, SPROP_UNSIGNED ),
+	SendPropFloat	(SENDINFO(m_flCrouchSlideTime)),
+	SendPropVector	(SENDINFO(m_vecGroundPlaneNormal), 0, SPROP_NORMAL ),
+#endif
 #if PREDICTION_ERROR_CHECK_LEVEL > 1 
 	SendPropFloat	(SENDINFO(m_flFallVelocity), 32, SPROP_NOSCALE ),
 
@@ -177,6 +182,11 @@ BEGIN_SIMPLE_DATADESC( CPlayerLocalData )
 	DEFINE_FIELD( m_flDuckJumpTime, FIELD_TIME ),
 	DEFINE_FIELD( m_flJumpTime, FIELD_TIME ),
 	DEFINE_FIELD( m_nStepside, FIELD_INTEGER ),
+#ifdef MOD_NTKS
+	DEFINE_FIELD( m_iWallsJumped, FIELD_INTEGER ),
+	DEFINE_FIELD( m_flCrouchSlideTime, FIELD_TIME ),
+	DEFINE_FIELD( m_vecGroundPlaneNormal, FIELD_VECTOR ),
+#endif
 	DEFINE_FIELD( m_flFallVelocity, FIELD_FLOAT ),
 	DEFINE_FIELD( m_nOldButtons, FIELD_INTEGER ),
 	DEFINE_FIELD( m_vecPunchAngle, FIELD_VECTOR ),

@@ -92,6 +92,10 @@ void CAI_BaseNPC::InitDefaultScheduleSR(void)
 	ADD_DEF_SCHEDULE( "SCHED_TAKE_COVER_FROM_ENEMY",		SCHED_TAKE_COVER_FROM_ENEMY);
 	ADD_DEF_SCHEDULE( "SCHED_TAKE_COVER_FROM_BEST_SOUND",	SCHED_TAKE_COVER_FROM_BEST_SOUND);
 	ADD_DEF_SCHEDULE( "SCHED_FLEE_FROM_BEST_SOUND",			SCHED_FLEE_FROM_BEST_SOUND);
+#ifndef MOD_NTKS
+	ADD_DEF_SCHEDULE( "SCHED_TAKE_COVER_FROM_BULLET_IMPACT",	SCHED_TAKE_COVER_FROM_BULLET_IMPACT);
+	ADD_DEF_SCHEDULE( "SCHED_FLEE_FROM_BULLET_IMPACT",			SCHED_FLEE_FROM_BULLET_IMPACT);
+#endif
 	ADD_DEF_SCHEDULE( "SCHED_TAKE_COVER_FROM_ORIGIN",		SCHED_TAKE_COVER_FROM_ORIGIN);
 	ADD_DEF_SCHEDULE( "SCHED_FAIL_TAKE_COVER",				SCHED_FAIL_TAKE_COVER);
 	ADD_DEF_SCHEDULE( "SCHED_RUN_FROM_ENEMY",				SCHED_RUN_FROM_ENEMY);
@@ -189,6 +193,10 @@ bool CAI_BaseNPC::LoadDefaultSchedules(void)
 	AI_LOAD_DEF_SCHEDULE( CAI_BaseNPC,					SCHED_TAKE_COVER_FROM_ENEMY);
 	AI_LOAD_DEF_SCHEDULE( CAI_BaseNPC,					SCHED_TAKE_COVER_FROM_BEST_SOUND);
 	AI_LOAD_DEF_SCHEDULE( CAI_BaseNPC,					SCHED_FLEE_FROM_BEST_SOUND);
+#ifdef MOD_NTKS
+	AI_LOAD_DEF_SCHEDULE( CAI_BaseNPC,					SCHED_TAKE_COVER_FROM_BULLET_IMPACT);
+	AI_LOAD_DEF_SCHEDULE( CAI_BaseNPC,					SCHED_FLEE_FROM_BULLET_IMPACT);
+#endif
 	AI_LOAD_DEF_SCHEDULE( CAI_BaseNPC,					SCHED_TAKE_COVER_FROM_ORIGIN);
 	AI_LOAD_DEF_SCHEDULE( CAI_BaseNPC,					SCHED_FAIL_TAKE_COVER);
 	AI_LOAD_DEF_SCHEDULE( CAI_BaseNPC,					SCHED_RUN_FROM_ENEMY);
@@ -962,6 +970,13 @@ AI_DEFINE_SCHEDULE
 	"		COND_CAN_MELEE_ATTACK2"
 );
 
+//MSVC doesn't do #ifdef in macro invocations
+#ifdef MOD_NTKS
+#define NTKS_ONLY(x) x
+#else
+#define NTKS_ONLY(x)
+#endif
+
 //=========================================================
 // > InvestigateSound
 //
@@ -996,6 +1011,12 @@ AI_DEFINE_SCHEDULE
 	"		COND_LIGHT_DAMAGE"
 	"		COND_HEAVY_DAMAGE"
 	"		COND_HEAR_DANGER"
+NTKS_ONLY(
+// investigate new sounds
+	"		COND_HEAR_COMBAT"
+	"		COND_HEAR_BULLET_IMPACT"
+	"		COND_HEAR_PLAYER"
+)
 );
 
 //=========================================================
@@ -1756,6 +1777,72 @@ AI_DEFINE_SCHEDULE
 	"	Interrupts"
 	"		COND_NEW_ENEMY"
 );
+
+#ifdef MOD_NTKS
+//=========================================================
+// > TakeCoverFromBulletImpact
+//
+//			hide from bullet impact sound
+//=========================================================
+AI_DEFINE_SCHEDULE
+(
+	SCHED_TAKE_COVER_FROM_BULLET_IMPACT,
+	//TASK_RUN_PATH_TIMED
+	//SCHED_TAKE_COVER_FROM_BULLET_IMPACT_INTERRUPTIBLE,
+
+	"	Tasks"
+	"		 TASK_SET_FAIL_SCHEDULE				SCHEDULE:SCHED_FLEE_FROM_BULLET_IMPACT"
+	"		 TASK_STOP_MOVING					0"
+	"		 TASK_STORE_BULLET_IMPACT_IN_SAVEPOSITION	0"
+	"		 TASK_FIND_COVER_FROM_BULLET_IMPACT	0"
+	"		 TASK_RUN_PATH						0"
+	"		 TASK_WAIT_FOR_MOVEMENT				0"
+	"		 TASK_REMEMBER						MEMORY:INCOVER"
+	"		 TASK_FACE_SAVEPOSITION				0"
+	"		 TASK_SET_ACTIVITY					ACTIVITY:ACT_IDLE"	// Translated to cover
+	""
+	"	Interrupts"
+	"		COND_NEW_ENEMY"
+	"		COND_SEE_FEAR"
+	"		COND_SEE_ENEMY"
+	"		COND_LIGHT_DAMAGE"
+	"		COND_HEAVY_DAMAGE"
+	"		COND_HEAR_DANGER"
+	"		COND_HEAR_COMBAT"
+	//"		COND_HEAR_PLAYER"
+	//FIXME: we'd like an updated position, but not for the NPC to stutter due to rapid fire
+	//"		COND_HEAR_BULLET_IMPACT"
+);
+
+
+//=========================================================
+//
+//=========================================================
+AI_DEFINE_SCHEDULE
+(
+	SCHED_FLEE_FROM_BULLET_IMPACT,
+
+	"	Tasks"
+	"		 TASK_SET_FAIL_SCHEDULE				SCHEDULE:SCHED_COWER"
+	"		 TASK_STORE_BULLET_IMPACT_IN_SAVEPOSITION	0"
+	"		 TASK_GET_PATH_AWAY_FROM_BULLET_IMPACT	600"
+	"		 TASK_RUN_PATH_FLEE					100"
+	"		 TASK_STOP_MOVING					0"
+	"		 TASK_FACE_SAVEPOSITION				0"
+	""
+	"	Interrupts"
+	"		COND_NEW_ENEMY"
+	"		COND_SEE_FEAR"
+	"		COND_SEE_ENEMY"
+	"		COND_LIGHT_DAMAGE"
+	"		COND_HEAVY_DAMAGE"
+	"		COND_HEAR_DANGER"
+	"		COND_HEAR_COMBAT"
+	//"		COND_HEAR_PLAYER"
+	//FIXME: we'd like an updated position, but not for the NPC to stutter due to rapid fire
+	//"		COND_HEAR_BULLET_IMPACT"
+);
+#endif
 
 
 //=========================================================

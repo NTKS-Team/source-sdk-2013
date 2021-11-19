@@ -49,6 +49,12 @@ public:
 	float					m_flDucktime;
 	float					m_flDuckJumpTime;
 	float					m_flJumpTime;
+#ifdef MOD_NTKS
+	int						m_iWallsJumped;
+	float					m_flCrouchSlideTime;
+	// used for crouch-slide
+	Vector					m_vecGroundPlaneNormal;
+#endif
 	int						m_nStepside;
 	float					m_flFallVelocity;
 	int						m_nOldButtons;

@@ -300,6 +300,14 @@ int	FindMiptex (const char *name)
 		}
 	}
 
+#ifdef MAPBASE
+	// MOD_NTKS
+	if ( ( propVal = GetMaterialVar( matID, "%compileNoWalljump" ) ) && StringIsTrue( propVal ) )
+	{
+		textureref[i].contents |= CONTENTS_NO_WALLJUMP;
+	}
+#endif
+
 	nummiptex++;
 
 	return i;
