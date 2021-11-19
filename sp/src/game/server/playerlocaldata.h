@@ -60,6 +60,9 @@ public:
 	CNetworkVar( float, m_flJumpTime );
 #ifdef MOD_NTKS
 	CNetworkVar( int, m_iWallsJumped );
+	CNetworkVar( float, m_flCrouchSlideTime );
+	// used for crouch-slide
+	CNetworkVector( m_vecGroundPlaneNormal );
 #endif
 	// Step sound side flip/flip
 	int m_nStepside;;

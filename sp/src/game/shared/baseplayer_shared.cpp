@@ -540,6 +540,12 @@ void CBasePlayer::UpdateStepSound( surfacedata_t *psurface, const Vector &vecOri
 	if ( !sv_footsteps.GetFloat() )
 		return;
 
+#ifdef MOD_NTKS
+	// do not play step sound while sliding
+	if ( m_sndCrouchSlide )
+		return;
+#endif
+
 	speed = VectorLength( vecVelocity );
 	float groundspeed = Vector2DLength( vecVelocity.AsVector2D() );
 
@@ -753,6 +759,80 @@ void CBasePlayer::PlayStepSound( Vector &vecOrigin, surfacedata_t *psurface, flo
 	// Kyle says: ugggh. This function may as well be called "PerformPileOfDesperateGameSpecificFootstepHacks".
 	OnEmitFootstepSound( params, vecOrigin, fvol );
 }
+
+#ifdef MOD_NTKS
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CBasePlayer::PlayCrouchSlideSound( surfacedata_t *psurface )
+{
+	//TODO: save/load m_sndCrouchSlide
+#if defined( CLIENT_DLL )
+	// during prediction play footstep sounds only once
+	if ( prediction->InPrediction() && !prediction->IsFirstTimePredicted() )
+		return;
+#endif
+
+	if ( !psurface )
+	{
+		if ( m_sndCrouchSlide )
+		{
+			CSoundEnvelopeController::GetController().SoundDestroy( m_sndCrouchSlide );
+			m_sndCrouchSlide = NULL;
+			m_sCrouchSlideSoundName = 0;
+		}
+		return;
+	}
+
+	unsigned short crouchSlideSoundName = psurface->sounds.scrapeSmooth;
+	if ( !crouchSlideSoundName )
+	{
+		crouchSlideSoundName = psurface->sounds.scrapeRough;
+		if ( !crouchSlideSoundName )
+			return;
+	}
+
+	if ( crouchSlideSoundName == m_sCrouchSlideSoundName )
+	{
+		//TODO: change pitch / volume
+		//CSoundEnvelopeController::GetController().SoundChangePitch( m_sndCrouchSlide, pitch, dt );
+		return;
+	}
+	else
+	{
+		CSoundEnvelopeController::GetController().SoundDestroy( m_sndCrouchSlide );
+		m_sndCrouchSlide = NULL;
+		m_sCrouchSlideSoundName = crouchSlideSoundName;
+	}
+
+	const char *pSoundName = MoveHelper()->GetSurfaceProps()->GetString( crouchSlideSoundName );
+
+	if ( !sv_footsteps.GetBool() )
+		return;
+
+	CSoundParameters params;
+	if ( !CBaseEntity::GetParametersForSound( pSoundName, params, NULL ) )
+		return;
+
+	//CPASAttenuationFilter filter( this );
+	CRecipientFilter filter;
+	filter.AddRecipientsByPAS( GetAbsOrigin() );
+
+#ifndef CLIENT_DLL
+	// in MP, server removes all players in the vecOrigin's PVS, these players generate the footsteps client side
+	if ( gpGlobals->maxClients > 1 )
+	{
+		filter.RemoveRecipientsByPVS( GetAbsOrigin() );
+	}
+#endif
+
+	m_sndCrouchSlide = CSoundEnvelopeController::GetController().SoundCreate( filter, entindex(), CHAN_BODY, pSoundName, params.soundlevel );
+	CSoundEnvelopeController::GetController().Play( m_sndCrouchSlide, 0.4f, params.pitch );
+
+	// Kyle says: ugggh. This function may as well be called "PerformPileOfDesperateGameSpecificFootstepHacks".
+	//OnEmitFootstepSound( params, GetAbsOrigin(), fvol );
+}
+#endif
 
 void CBasePlayer::UpdateButtonState( int nUserCmdButtonMask )
 {
