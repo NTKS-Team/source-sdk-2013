@@ -24,6 +24,10 @@
 #include "econ_item_view.h"
 #endif
 
+#ifdef MOD_NTKS
+#include "soundenvelope.h"
+#endif
+
 // For queuing and processing usercmds
 class CCommandContext
 {
@@ -482,6 +486,9 @@ public:
 	virtual void			SetStepSoundTime( stepsoundtimes_t iStepSoundTime, bool bWalking );
 	virtual void			DeathSound( const CTakeDamageInfo &info );
 	virtual const char*		GetSceneSoundToken( void ) { return ""; }
+#ifdef MOD_NTKS
+	void					PlayCrouchSlideSound( surfacedata_t *psurface );
+#endif
 
 	virtual void			OnEmitFootstepSound( const CSoundParameters& params, const Vector& vecOrigin, float fVolume ) {}
 
@@ -1286,6 +1293,10 @@ private:
 	};
 	// One for left and one for right side of step
 	StepSoundCache_t		m_StepSoundCache[ 2 ];
+#ifdef MOD_NTKS
+	unsigned short			m_sCrouchSlideSoundName;
+	CSoundPatch*			m_sndCrouchSlide;
+#endif
 
 	CUtlLinkedList< CPlayerSimInfo >  m_vecPlayerSimInfo;
 	CUtlLinkedList< CPlayerCmdInfo >  m_vecPlayerCmdInfo;

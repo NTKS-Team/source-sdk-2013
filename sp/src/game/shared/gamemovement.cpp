@@ -941,6 +941,10 @@ void CGameMovement::CategorizeGroundSurface( trace_t &pm )
 		player->m_surfaceFriction = 1.0f;
 
 	player->m_chTextureType = player->m_pSurfaceData->game.material;
+
+#ifdef MOD_NTKS
+	player->m_Local.m_vecGroundPlaneNormal = pm.plane.normal;
+#endif
 }
 
 bool CGameMovement::IsDead( void ) const
@@ -1614,6 +1618,67 @@ void CGameMovement::StepMove( Vector &vecDestination, trace_t &trace )
 	}
 }
 
+#ifdef MOD_NTKS
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+bool CGameMovement::IsCrouchSliding( void ) const
+{
+	if ( player->m_Local.m_flCrouchSlideTime >= gpGlobals->curtime )
+	{
+		Assert( player->m_Local.m_bDucking || player->m_Local.m_bDucked );
+		return true;
+	}
+	return false;
+}
+
+static ConVar sv_crouch_slide_time( "sv_crouch_slide_time", "0.5", FCVAR_REPLICATED | FCVAR_CHEAT );
+static ConVar sv_crouch_slide_speed_threshold( "sv_crouch_slide_speed_threshold", "260", FCVAR_REPLICATED | FCVAR_CHEAT );
+static ConVar sv_crouch_slide_speed_cancel( "sv_crouch_slide_speed_cancel", "150", FCVAR_REPLICATED | FCVAR_CHEAT );
+static ConVar sv_crouch_slide_friction_mult( "sv_crouch_slide_friction_mult", "0.1", FCVAR_REPLICATED | FCVAR_CHEAT );
+#define GAMEMOVEMENT_CROUCH_SLIDE_TIME (sv_crouch_slide_time.GetFloat() + GAMEMOVEMENT_DUCK_TIME / 1000.0f)
+
+static bool CrouchSlideSpeedReached( Vector move, const Vector &surfaceNormal )
+{
+	float speed = VectorNormalize( move );
+
+	// zero out z and renormalize
+	float zsqr = move.z * move.z;
+	move.z = 0.0f;
+	move /= sqrtf( 1.0f - zsqr );
+
+	float steepness = DotProduct( move, surfaceNormal );
+	if ( steepness < -0.45f ) return false;
+	float slopeMod = ( Bias( steepness + 0.45f, 0.7f ) + 0.2f ) * 1.2f;
+	return speed * Min( slopeMod, 1.25f ) > sv_crouch_slide_speed_threshold.GetFloat();
+}
+
+static bool CrouchSlideSpeedReached( CBasePlayer *player )
+{
+	if ( !player->GetGroundEntity() )
+	{
+		Assert( player->m_Local.m_vecGroundPlaneNormal == vec3_origin );
+		return false;
+	}
+	
+	Assert( player->m_Local.m_vecGroundPlaneNormal != vec3_origin );
+	
+/*
+	trace_t tr;
+	//FIXME: is there a better trace we can do to get the plane normal of the ground-entity?
+	Ray_t ray;
+	ray.Init( player->GetAbsOrigin(), player->GetGroundEntity()->GetAbsOrigin(), VEC_HULL_MIN_SCALED( player ), VEC_HULL_MAX_SCALED( player ) );
+	UTIL_TraceRay( ray, MASK_PLAYERSOLID, player, COLLISION_GROUP_PLAYER_MOVEMENT, &tr );
+	if ( !tr.DidHit() )
+	{
+		Warning( "Unable to find ground plane.\n" );
+		return false;
+	}
+*/
+	return CrouchSlideSpeedReached( player->GetAbsVelocity(), player->m_Local.m_vecGroundPlaneNormal );
+}
+#endif
+
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
@@ -1665,6 +1730,13 @@ void CGameMovement::Friction( void )
 		{
 			control = (speed < sv_stopspeed.GetFloat()) ? sv_stopspeed.GetFloat() : speed;
 		}
+
+#ifdef MOD_NTKS
+		if ( IsCrouchSliding() )
+		{
+			friction *= sv_crouch_slide_friction_mult.GetFloat();
+		}
+#endif
 
 		// Add the amount to the drop amount.
 		drop += control*friction*gpGlobals->frametime;
@@ -2676,6 +2748,10 @@ bool CGameMovement::CheckJumpButton( void )
 
 		m_vecDirectionBeforeCollision = vec3_origin;
 	}
+
+	// cancel crouch slide
+	player->m_Local.m_flCrouchSlideTime = 0.0f;
+	player->PlayCrouchSlideSound( NULL );
 #endif
 
 
@@ -3891,6 +3967,13 @@ void CGameMovement::SetGroundEntity( trace_t *pm )
 		// Subtract ground velocity at instant we hit ground jumping
 		vecBaseVelocity -= newGround->GetAbsVelocity(); 
 		vecBaseVelocity.z = newGround->GetAbsVelocity().z;
+#ifdef MOD_NTKS
+		// reset CrouchSlideTime after having fallen
+		if ( ( player->m_Local.m_flCrouchSlideTime || player->m_Local.m_bDucking || player->m_Local.m_bDucked ) && player->GetAbsVelocity().LengthSqr() > Sqr( sv_crouch_slide_speed_threshold.GetFloat() ) )
+		{
+			player->m_Local.m_flCrouchSlideTime = gpGlobals->curtime + GAMEMOVEMENT_CROUCH_SLIDE_TIME;
+		}
+#endif
 	}
 	else if ( oldGround && !newGround )
 	{
@@ -3906,6 +3989,10 @@ void CGameMovement::SetGroundEntity( trace_t *pm )
 
 	if ( newGround )
 	{
+#ifdef MOD_NTKS
+		if ( IsCrouchSliding() )
+			player->PlayCrouchSlideSound( MoveHelper()->GetSurfaceProps()->GetSurfaceData( pm->surface.surfaceProps ) );
+#endif
 		CategorizeGroundSurface( *pm );
 
 		// Then we are not in water jump sequence
@@ -3922,10 +4009,37 @@ void CGameMovement::SetGroundEntity( trace_t *pm )
 			player->m_Local.m_iWallsJumped = 0;
 			m_vecDirectionBeforeCollision = vec3_origin;
 		}
+	
+		// cancel crouch slide if the new surface is steeper
+		if ( IsCrouchSliding() )
+		{
+#if 0
+			Vector horMoveDir = player->GetAbsVelocity();
+			horMoveDir.z = 0.0f;
+			VectorNormalize( horMoveDir );
+			float oldSteep = DotProduct( horMoveDir, player->m_Local.m_vecGroundPlaneNormal );
+			float newSteep = DotProduct( horMoveDir, pm->plane.normal );
+			if ( newSteep <= oldSteep )
+#else
+			if ( newGround != oldGround && !CrouchSlideSpeedReached( player->GetAbsVelocity(), pm->plane.normal ) )
+#endif
+			{
+				// cancel crouch slide
+				player->m_Local.m_flCrouchSlideTime = 0.0f;
+				player->PlayCrouchSlideSound( NULL );
+			}
+		}
 #endif
 
 		mv->m_vecVelocity.z = 0.0f;
 	}
+#ifdef MOD_NTKS
+	else
+	{
+		player->m_Local.m_vecGroundPlaneNormal = vec3_origin;
+		player->PlayCrouchSlideSound( NULL );
+	}
+#endif
 }
 
 //-----------------------------------------------------------------------------
@@ -4351,6 +4465,13 @@ void CGameMovement::FixPlayerCrouchStuck( bool upward )
 
 bool CGameMovement::CanUnduck()
 {
+#ifdef MOD_NTKS
+	if ( IsCrouchSliding() && player->GetAbsVelocity().LengthSqr() >= Sqr( sv_crouch_slide_speed_cancel.GetFloat() ))
+	{
+		return false;
+	}
+#endif
+
 	int i;
 	trace_t trace;
 	Vector newOrigin;
@@ -4420,6 +4541,10 @@ void CGameMovement::FinishUnDuck( void )
 	player->m_Local.m_bInDuckJump  = false;
 	player->SetViewOffset( GetPlayerViewOffset( false ) );
 	player->m_Local.m_flDucktime = 0;
+#ifdef MOD_NTKS
+	player->m_Local.m_flCrouchSlideTime = 0.0f;
+	player->PlayCrouchSlideSound( NULL );
+#endif
 
 	mv->SetAbsOrigin( newOrigin );
 
@@ -4484,6 +4609,9 @@ void CGameMovement::FinishUnDuckJump( trace_t &trace )
 	player->m_Local.m_flDucktime = 0.0f;
 	player->m_Local.m_flDuckJumpTime = 0.0f;
 	player->m_Local.m_flJumpTime = 0.0f;
+#ifdef MOD_NTKS
+	player->PlayCrouchSlideSound( NULL );
+#endif
 
 	Vector vecViewOffset = GetPlayerViewOffset( false );
 	vecViewOffset.z -= flDeltaZ;
@@ -4507,6 +4635,14 @@ void CGameMovement::FinishDuck( void )
 	player->AddFlag( FL_DUCKING );
 	player->m_Local.m_bDucked = true;
 	player->m_Local.m_bDucking = false;
+
+#ifdef MOD_NTKS
+	if ( ( mv->m_nButtons & IN_DUCK ) )
+	{
+		player->m_Local.m_flCrouchSlideTime = 0.0f;
+		player->PlayCrouchSlideSound( NULL );
+	}
+#endif
 
 	player->SetViewOffset( GetPlayerViewOffset( true ) );
 
@@ -4617,6 +4753,11 @@ void CGameMovement::HandleDuckingSpeedCrop( void )
 //-----------------------------------------------------------------------------
 bool CGameMovement::CanUnDuckJump( trace_t &trace )
 {
+#ifdef MOD_NTKS
+	if ( IsCrouchSliding() )
+		return false;
+#endif
+
 	// Trace down to the stand position and see if we can stand.
 	Vector vecEnd( mv->GetAbsOrigin() );
 	vecEnd.z -= 36.0f;						// This will have to change if bounding hull change!
@@ -4667,12 +4808,37 @@ void CGameMovement::Duck( void )
 	if ( IsDead() )
 		return;
 
+#ifdef MOD_NTKS
+	if ( !( m_iSpeedCropped & SPEED_CROPPED_DUCK ) && player->m_Local.m_flCrouchSlideTime && ( player->GetGroundEntity() != NULL ) )
+	{
+		if ( !IsCrouchSliding() || player->GetAbsVelocity().LengthSqr() < Sqr( sv_crouch_slide_speed_cancel.GetFloat() ) )
+		{
+			player->m_Local.m_flCrouchSlideTime = 0.0f;
+			player->PlayCrouchSlideSound( NULL );
+		}
+		else
+		{
+			mv->m_flForwardMove *= 0.1f;
+			mv->m_flSideMove    *= 0.25f;
+			mv->m_flUpMove      *= 0.25f;
+			m_iSpeedCropped |= SPEED_CROPPED_DUCK;
+		}
+	}
+#endif
 	// Slow down ducked players.
 	HandleDuckingSpeedCrop();
 
 	// If the player is holding down the duck button, the player is in duck transition, ducking, or duck-jumping.
 	if ( ( mv->m_nButtons & IN_DUCK ) || player->m_Local.m_bDucking  || bInDuck || bDuckJump )
 	{
+#ifdef MOD_NTKS
+		// cancel crouch slide if duck was released and pressed again
+		if ( ( mv->m_nButtons & IN_DUCK ) && ( buttonsChanged & IN_DUCK ) )
+		{
+			player->m_Local.m_flCrouchSlideTime = 0.0f;
+			player->PlayCrouchSlideSound( NULL );
+		}
+#endif
 		// DUCK
 		if ( ( mv->m_nButtons & IN_DUCK ) || bDuckJump )
 		{
@@ -4686,6 +4852,13 @@ void CGameMovement::Duck( void )
 					UTIL_HudHintText( player, "#Valve_Hint_Crouch" );
 					player->m_nNumCrouches++;
 				}
+			}
+#endif
+#ifdef MOD_NTKS
+			if ( !player->m_Local.m_flCrouchSlideTime && CrouchSlideSpeedReached( player ) )
+			{
+				player->m_Local.m_flCrouchSlideTime = gpGlobals->curtime + GAMEMOVEMENT_CROUCH_SLIDE_TIME;
+				player->PlayCrouchSlideSound( player->m_pSurfaceData );
 			}
 #endif
 			// Have the duck button pressed, but the player currently isn't in the duck position.
@@ -4763,6 +4936,10 @@ void CGameMovement::Duck( void )
 
 			if ( bDuckJumpTime )
 				return;
+#ifdef MOD_NTKS
+			if ( IsCrouchSliding() )
+				return;
+#endif
 
 			// Try to unduck unless automovement is not allowed
 			// NOTE: When not onground, you can always unduck

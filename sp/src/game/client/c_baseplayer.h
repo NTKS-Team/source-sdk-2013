@@ -36,6 +36,10 @@
 #include "econ_item_view.h"
 #endif
 
+#ifdef MOD_NTKS
+#include "soundenvelope.h"
+#endif
+
 class C_BaseCombatWeapon;
 class C_BaseViewModel;
 class C_FuncLadder;
@@ -358,6 +362,9 @@ public:
 	virtual void GetStepSoundVelocities( float *velwalk, float *velrun );
 	virtual void SetStepSoundTime( stepsoundtimes_t iStepSoundTime, bool bWalking );
 	virtual const char *GetOverrideStepSound( const char *pszBaseStepSoundName ) { return pszBaseStepSoundName; }
+#ifdef MOD_NTKS
+	void PlayCrouchSlideSound( surfacedata_t *psurface );
+#endif
 
 	virtual void OnEmitFootstepSound( const CSoundParameters& params, const Vector& vecOrigin, float fVolume ) {}
 
@@ -658,6 +665,10 @@ private:
 	};
 	// One for left and one for right side of step
 	StepSoundCache_t		m_StepSoundCache[ 2 ];
+#ifdef MOD_NTKS
+	unsigned short			m_sCrouchSlideSoundName;
+	CSoundPatch*			m_sndCrouchSlide;
+#endif
 
 #ifdef MAPBASE // From Alien Swarm SDK
 	CNetworkHandle( C_PostProcessController, m_hPostProcessCtrl );	// active postprocessing controller

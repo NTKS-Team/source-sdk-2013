@@ -102,6 +102,10 @@ protected:
 
 	void			WaterJump( void );
 
+#ifdef MOD_NTKS
+	bool			IsCrouchSliding( void ) const;
+#endif
+
 	// Handles both ground friction and water friction
 	void			Friction( void );
 

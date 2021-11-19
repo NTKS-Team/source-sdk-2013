@@ -765,6 +765,11 @@ CBasePlayer::CBasePlayer( )
 	m_flMovementTimeForUserCmdProcessingRemaining = 0.0f;
 
 	m_hPostProcessCtrl.Set( NULL );
+
+#ifdef MOD_NTKS
+	m_sndCrouchSlide = NULL;
+	m_sCrouchSlideSoundName = 0;
+#endif
 }
 
 CBasePlayer::~CBasePlayer( )
@@ -5780,6 +5785,8 @@ bool CBasePlayer::GetInVehicle( IServerVehicle *pVehicle, int nRole )
 	m_Local.m_flJumpTime = 0.0f;
 #ifdef MOD_NTKS
 	m_Local.m_iWallsJumped = 0;
+	m_Local.m_flCrouchSlideTime = 0.0f;
+	m_Local.m_vecGroundPlaneNormal = vec3_origin;
 #endif
 
 	// Turn our toggled duck off
