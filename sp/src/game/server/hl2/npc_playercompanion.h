@@ -285,6 +285,9 @@ public:
 	bool			ShouldLookForBetterWeapon();
 	bool			Weapon_CanUse( CBaseCombatWeapon *pWeapon );
 	void			Weapon_Equip( CBaseCombatWeapon *pWeapon );
+#ifdef MAPBASE
+	bool			DoUnholster( void );
+#endif
 	void			PickupWeapon( CBaseCombatWeapon *pWeapon );
 
 #if COMPANION_MELEE_ATTACK

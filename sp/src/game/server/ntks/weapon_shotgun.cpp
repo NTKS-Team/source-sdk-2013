@@ -214,9 +214,33 @@ acttable_t	CWeaponShotgun::m_acttable[] =
 	{ ACT_RANGE_AIM_MED,			ACT_RANGE_AIM_SHOTGUN_MED,			false },
 	{ ACT_RANGE_ATTACK1_MED,		ACT_RANGE_ATTACK_SHOTGUN_MED,		false },
 #endif
+
+	// HL2:DM activities (for third-person animations in SP)
+	{ ACT_HL2MP_IDLE,                    ACT_HL2MP_IDLE_SHOTGUN,                    false },
+	{ ACT_HL2MP_RUN,                    ACT_HL2MP_RUN_SHOTGUN,                    false },
+	{ ACT_HL2MP_IDLE_CROUCH,            ACT_HL2MP_IDLE_CROUCH_SHOTGUN,            false },
+	{ ACT_HL2MP_WALK_CROUCH,            ACT_HL2MP_WALK_CROUCH_SHOTGUN,            false },
+	{ ACT_HL2MP_GESTURE_RANGE_ATTACK,    ACT_HL2MP_GESTURE_RANGE_ATTACK_SHOTGUN,    false },
+	{ ACT_HL2MP_GESTURE_RELOAD,            ACT_HL2MP_GESTURE_RELOAD_SHOTGUN,        false },
+	{ ACT_HL2MP_JUMP,                    ACT_HL2MP_JUMP_SHOTGUN,                    false },
+#ifdef EXPANDED_HL2DM_ACTIVITIES
+	{ ACT_HL2MP_WALK,					ACT_HL2MP_WALK_SHOTGUN,						false },
+	{ ACT_HL2MP_GESTURE_RANGE_ATTACK2,	ACT_HL2MP_GESTURE_RANGE_ATTACK2_SHOTGUN,	false },
+#endif
 };
 
 IMPLEMENT_ACTTABLE(CWeaponShotgun);
+
+// Allows Weapon_BackupActivity() to access the shotgun's activity table.
+acttable_t *GetShotgunActtable()
+{
+	return CWeaponShotgun::m_acttable;
+}
+
+int GetShotgunActtableCount()
+{
+	return ARRAYSIZE(CWeaponShotgun::m_acttable);
+}
 
 void CWeaponShotgun::Precache( void )
 {
@@ -408,6 +432,11 @@ bool CWeaponShotgun::StartReload( void )
 	pOwner->m_flNextAttack = gpGlobals->curtime;
 	m_flNextPrimaryAttack = gpGlobals->curtime + SequenceDuration();
 
+	if ( pOwner->IsPlayer() )
+	{
+		static_cast<CBasePlayer*>(pOwner)->SetAnimation( PLAYER_RELOAD );
+	}
+
 	m_bInReload = true;
 	return true;
 }
@@ -558,10 +587,10 @@ void CWeaponShotgun::GenericAttack( bool bSlug )
 	SendWeaponAnim( ACT_VM_PRIMARYATTACK );
 
 	// player "shoot" animation
-	pPlayer->SetAnimation( PLAYER_ATTACK1 );
+	pPlayer->SetAnimation( bSlug ? PLAYER_ATTACK2 : PLAYER_ATTACK1 );
 
 	// Don't fire again until fire animation has completed
-	m_flNextPrimaryAttack = gpGlobals->curtime + SequenceDuration();
+	m_flNextPrimaryAttack = gpGlobals->curtime + GetViewModelSequenceDuration();
 	m_iClip1 -= 1;
 
 	Vector	vecSrc		= pPlayer->Weapon_ShootPosition( );

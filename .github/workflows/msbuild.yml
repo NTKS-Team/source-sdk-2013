@@ -25,7 +25,7 @@ jobs:
     - name: Enable VS2019
       working-directory: sp/src/vpc_scripts
       shell: bash
-      run: sed -i 's/^\($Conditional[ 	]\+VS2019[ 	]\+\).*/\1"1"/' default.vgc
+      run: sed -i 's/^\($Conditional[ 	]\+VS2019[ 	]\+\).*/\1"1"/' newer_vs_toolsets.vpc
 
     - name: Create projectfiles
       working-directory: sp/src

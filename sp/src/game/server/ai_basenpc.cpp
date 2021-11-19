@@ -6623,8 +6623,14 @@ Activity CAI_BaseNPC::NPC_BackupActivity( Activity eNewActivity )
 
 	// ---------------------------------------------
 
-	if (eNewActivity == ACT_COVER_MED)
-		eNewActivity = ACT_COVER_LOW;
+	switch (eNewActivity)
+	{
+		case ACT_COVER_MED:				eNewActivity = ACT_COVER_LOW; break;
+#ifdef EXPANDED_HL2_COVER_ACTIVITIES
+		case ACT_RANGE_AIM_MED:			eNewActivity = ACT_RANGE_AIM_LOW; break;
+		case ACT_RANGE_ATTACK1_MED:		eNewActivity = ACT_RANGE_ATTACK1_LOW; break;
+#endif
+	}
 
 	//if (eNewActivity == ACT_COVER)
 	//	return TranslateActivity(ACT_IDLE);
@@ -12291,6 +12297,9 @@ BEGIN_ENT_SCRIPTDESC( CAI_BaseNPC, CBaseCombatCharacter, "The base class all NPC
 	DEFINE_SCRIPTFUNC_NAMED( ScriptSetActivityID, "SetActivityID", "Set the NPC's current activity ID." )
 	DEFINE_SCRIPTFUNC( ResetActivity, "Reset the NPC's current activity." )
 
+	DEFINE_SCRIPTFUNC_NAMED( ScriptTranslateActivity, "TranslateActivity", "Translates the specified activity string and returns the translated activity ID." )
+	DEFINE_SCRIPTFUNC_NAMED( ScriptTranslateActivityID, "TranslateActivityID", "Translates the specified activity ID and returns the translated activity ID." )
+
 	DEFINE_SCRIPTFUNC_NAMED( VScriptGetGestureVersionOfActivity, "GetGestureVersionOfActivity", "Get the gesture activity counterpart of the specified sequence activity, if one exists." )
 	DEFINE_SCRIPTFUNC_NAMED( VScriptGetGestureVersionOfActivityID, "GetGestureVersionOfActivityID", "Get the gesture activity ID counterpart of the specified sequence activity ID, if one exists." )
 	DEFINE_SCRIPTFUNC_NAMED( VScriptGetSequenceVersionOfGesture, "GetSequenceVersionOfGesture", "Get the sequence activity counterpart of the specified gesture activity, if one exists." )
@@ -12324,6 +12333,10 @@ BEGIN_ENT_SCRIPTDESC( CAI_BaseNPC, CBaseCombatCharacter, "The base class all NPC
 	DEFINE_SCRIPTFUNC_NAMED( VScriptGetSquad, "GetSquad", "Get the NPC's squad if it has one." )
 	DEFINE_SCRIPTFUNC( IsInSquad, "Returns true if the NPC is in a squad." )
 	DEFINE_SCRIPTFUNC( NumWeaponsInSquad, "Get the number of weapons in a squad." )
+		
+	DEFINE_SCRIPTFUNC( IsCrouching, "Returns true if the NPC is crouching." )
+	DEFINE_SCRIPTFUNC( Crouch, "Tells the NPC to crouch." )
+	DEFINE_SCRIPTFUNC( Stand, "Tells the NPC to stand if it is crouching." )
 
 	// 
 	// Hooks
