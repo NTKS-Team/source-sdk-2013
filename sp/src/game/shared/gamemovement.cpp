@@ -2574,10 +2574,22 @@ bool CGameMovement::CheckJumpButton( void )
 		return false;
 
 #ifdef MOD_NTKS
-	// No more effect
-	if (player->GetGroundEntity() == NULL)
+	if ( player->GetGroundEntity() == NULL )
 	{
-		if ( player->m_Local.m_iWallsJumped >= sv_walljump_limit.GetInt() )
+		// check if there is some room to jump
+		bool hasHeadroom;
+		{
+			Vector playerMins = GetPlayerMins( true );
+			Vector playerMaxs = GetPlayerMaxs( true );
+			Vector hullSizeNormal = GetPlayerMaxs( false ) - GetPlayerMins( false );
+			Vector hullSizeCrouch = playerMaxs - playerMins;
+			Ray_t ray;
+			trace_t tr;
+			ray.Init( mv->GetAbsOrigin(), mv->GetAbsOrigin() - ( hullSizeNormal - hullSizeCrouch ), playerMins, playerMaxs );
+			UTIL_TraceRay( ray, PlayerSolidMask(), mv->m_nPlayerHandle.Get(), COLLISION_GROUP_PLAYER_MOVEMENT, &tr );
+			hasHeadroom = !tr.DidHit();
+		}
+		if ( !hasHeadroom || player->m_Local.m_iWallsJumped >= sv_walljump_limit.GetInt() )
 		{
 			mv->m_nOldButtons |= IN_JUMP;
 			return false;		// in air, so no effect
