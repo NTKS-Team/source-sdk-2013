@@ -4867,7 +4867,7 @@ void CGameMovement::Duck( void )
 			}
 #endif
 #ifdef MOD_NTKS
-			if ( !player->m_Local.m_flCrouchSlideTime && CrouchSlideSpeedReached( player ) )
+			if ( !bInDuck && !player->m_Local.m_flCrouchSlideTime && CrouchSlideSpeedReached( player ) )
 			{
 				player->m_Local.m_flCrouchSlideTime = gpGlobals->curtime + GAMEMOVEMENT_CROUCH_SLIDE_TIME;
 				player->PlayCrouchSlideSound( player->m_pSurfaceData );
