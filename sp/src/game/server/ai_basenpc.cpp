@@ -663,6 +663,14 @@ void CAI_BaseNPC::Event_Killed( const CTakeDamageInfo &info )
 			RemoveDeferred();
 		}
 	}
+#ifdef MOD_NTKS
+	for ( int i = 0; i < m_CarriedObjects.Count(); ++i )
+	{
+		AssertMsg( m_CarriedObjects[i].m_pEnt->GetParent() == this, "Carried item is not parented to us" );
+		m_CarriedObjects[i].Drop();
+	}
+	m_CarriedObjects.Purge();
+#endif
 }
 
 //-----------------------------------------------------------------------------
@@ -9463,6 +9471,51 @@ Vector CAI_BaseNPC::EyePosition( void )
 	return BaseClass::EyePosition();
 }
 
+#ifdef MOD_NTKS
+class CAICarriedItemDropTarget : public CPointEntity
+{
+	DECLARE_DATADESC();
+
+public:
+	DECLARE_CLASS( CAICarriedItemDropTarget, CPointEntity );
+
+	CAICarriedItemDropTarget()
+	{
+		m_bForceTargetLocation = false;
+		m_sItemName = NULL_STRING;
+	}
+
+	const char *GetItemName() const
+	{
+		return m_sItemName == NULL_STRING ? NULL : STRING( m_sItemName );
+	}
+
+	bool ForceTargetLocation( Vector &vec, QAngle &ang ) const
+	{
+		if ( !m_bForceTargetLocation )
+			return false;
+
+		vec = GetAbsOrigin();
+		ang = GetAbsAngles();
+		return true;
+	}
+
+private:
+	bool m_bForceTargetLocation;
+	string_t m_sItemName;
+
+public:
+	COutputEHANDLE m_OnItemDroppedOff;
+};
+
+LINK_ENTITY_TO_CLASS( ai_item_drop_target, CAICarriedItemDropTarget );
+BEGIN_DATADESC( CAICarriedItemDropTarget )
+	DEFINE_KEYFIELD( m_sItemName, FIELD_STRING, "ItemName" ),
+	DEFINE_KEYFIELD( m_bForceTargetLocation, FIELD_BOOLEAN, "ForceTargetLocation" ),
+	DEFINE_OUTPUT( m_OnItemDroppedOff, "OnItemDroppedOff" ),
+END_DATADESC()
+#endif
+
 //------------------------------------------------------------------------------
 // Purpose :
 // Input   :
@@ -9655,9 +9708,49 @@ void CAI_BaseNPC::HandleAnimEvent( animevent_t *pEvent )
 			}
 			else
 			{
-				// Picking up an item.
-				PickupItem( pPickup );
-				TaskComplete();
+#ifdef MOD_NTKS
+				CAICarriedItemDropTarget *pDropTarget = dynamic_cast<CAICarriedItemDropTarget *>( pPickup );
+				if ( pDropTarget )
+				{
+					bool foundDropTarget = false;
+					for( int i = 0; i < m_CarriedObjects.Count(); ++i )
+					{
+						AssertMsg( m_CarriedObjects[i].m_pEnt->GetParent() == this, "Carried item is not parented to us" );
+
+						if ( pDropTarget->GetItemName() && !FStrEq( pDropTarget->GetItemName(), STRING( m_CarriedObjects[i].m_pEnt->GetEntityName() ) ) )
+						{
+							continue;
+						}
+						foundDropTarget = true;
+
+						Vector vecTarget;
+						QAngle angTarget;
+						if ( pDropTarget->ForceTargetLocation( vecTarget, angTarget ) )
+						{
+							m_CarriedObjects[i].Drop( vecTarget, angTarget );
+						}
+						else
+						{
+							m_CarriedObjects[i].Drop();
+						}
+						m_OnItemDrop.Set( m_CarriedObjects[i].m_pEnt, this, pDropTarget );
+						pDropTarget->m_OnItemDroppedOff.Set( m_CarriedObjects[i].m_pEnt, this, pDropTarget );
+
+						m_CarriedObjects.FastRemove( i );
+					}
+					if ( !foundDropTarget )
+					{
+						TaskFail( "Item not carried!\n" );
+						break;
+					}
+				}
+				else
+#endif
+				{
+					// Picking up an item.
+					PickupItem( pPickup );
+					TaskComplete();
+				}
 			}
 
 			break;
@@ -11747,6 +11840,49 @@ void CAI_BaseNPC::PickupWeapon( CBaseCombatWeapon *pWeapon )
 #ifdef MAPBASE
 extern ConVar sk_healthvial;
 
+//TODO: npc_artifact_carrier: if sees player too long, fail game
+class CKshatriyaArtifact : public CPhysicsProp
+{
+public:
+	DECLARE_CLASS( CKshatriyaArtifact, CPhysicsProp );
+
+	CKshatriyaArtifact()
+	{
+		m_sNPCCarryAttachment = NULL_STRING;
+		m_vecNPCCarryOriginOffset = vec3_origin;
+		m_angNPCCarryAnglesOffset = vec3_angle;
+	}
+
+	string_t GetModelName( void ) const
+	{
+		string_t name = BaseClass::GetModelName();
+		return name != NULL_STRING ? name : MAKE_STRING( "models/items/battery.mdl" );
+	}
+
+	string_t		m_sNPCCarryAttachment;
+	Vector			m_vecNPCCarryOriginOffset;
+	QAngle			m_angNPCCarryAnglesOffset;
+	COutputEHANDLE	m_OnPickedUpByNPC;
+	COutputEHANDLE	m_OnDroppedByNPC;
+
+	DECLARE_DATADESC();
+};
+
+LINK_ENTITY_TO_CLASS(prop_kshatriya_artifact, CKshatriyaArtifact);
+PRECACHE_REGISTER(prop_kshatriya_artifact);
+
+BEGIN_DATADESC( CKshatriyaArtifact )
+
+	DEFINE_KEYFIELD( m_vecNPCCarryOriginOffset, FIELD_VECTOR, "NPCCarryOriginOffset" ),
+	DEFINE_KEYFIELD( m_angNPCCarryAnglesOffset, FIELD_VECTOR, "NPCCarryAngleOffset" ),
+
+	DEFINE_KEYFIELD( m_sNPCCarryAttachment, FIELD_STRING, "NPCCarryAttachment" ),
+
+	DEFINE_OUTPUT( m_OnPickedUpByNPC, "OnPickedUpByNPC" ),
+	DEFINE_OUTPUT( m_OnDroppedByNPC, "OnDroppedByNPC" ),
+
+END_DATADESC()
+
 //------------------------------------------------------------------------------
 // Purpose: Moved from CNPC_Citizen to CAI_BaseNPC for new pickup input
 //------------------------------------------------------------------------------
@@ -11772,6 +11908,34 @@ void CAI_BaseNPC::PickupItem( CBaseEntity *pItem )
 		AddGrenades( 1 );
 		UTIL_Remove( pItem );
 	}
+#ifdef MOD_NTKS
+	else if ( FClassnameIs(pItem, "prop_kshatriya_artifact") )
+	{
+		CKshatriyaArtifact *pArtifact = static_cast<CKshatriyaArtifact*>( pItem );
+		int attachment = -1;
+		if ( pArtifact->m_sNPCCarryAttachment != NULL_STRING )
+		{
+			attachment = LookupAttachment( STRING( pArtifact->m_sNPCCarryAttachment ) );
+			AssertMsg( attachment >= 0, "Attachment not found" );
+		}
+		pArtifact->SetParent( this, attachment );
+
+		m_CarriedObjects.AddToHead();
+		m_CarriedObjects.Head().m_pEnt = pArtifact;
+		m_CarriedObjects.Head().m_iAttachment = attachment;
+		m_CarriedObjects.Head().m_iMovetype = pArtifact->GetMoveType();
+		m_CarriedObjects.Head().m_bNotSolidFlag = pArtifact->GetSolidFlags() & FSOLID_NOT_SOLID;
+
+		// Now move myself directly onto the attachment point
+		pArtifact->SetMoveType( MOVETYPE_NONE );
+		pArtifact->AddSolidFlags( FSOLID_NOT_SOLID );
+
+		pArtifact->SetLocalOrigin( pArtifact->m_vecNPCCarryOriginOffset );
+		pArtifact->SetLocalAngles( pArtifact->m_angNPCCarryAnglesOffset );
+
+		pArtifact->m_OnPickedUpByNPC.Set( this, this, pArtifact );
+	}
+#endif
 
 	// Only warn if we didn't have any elements of OnItemPickup
 	else if (iNumElements <= 0)
@@ -16426,3 +16590,59 @@ bool CAI_BaseNPC::IsInChoreo() const
 {
 	return m_bInChoreo;
 }
+
+#ifdef MOD_NTKS
+
+void CAI_BaseNPC::CarriedObjectPreState::Drop() const
+{
+	CBaseEntity *pParent = m_pEnt->GetParent();
+
+	Vector origin;
+	QAngle angles;
+
+	if ( !pParent )
+	{
+		AssertMsg( false, "Carried item has no parent" );
+		origin = m_pEnt->GetAbsOrigin();
+		angles = m_pEnt->GetAbsAngles();
+	}
+	else if ( m_iAttachment >= 0 )
+	{
+		//Assert( pParent->GetBaseAnimating() ); !!!
+		pParent->GetBaseAnimating()->GetAttachment( m_iAttachment, origin, angles );
+	}
+	else
+	{
+		origin = pParent->GetAbsOrigin();
+		angles = pParent->GetAbsAngles();
+	}
+
+	Drop( origin, angles );
+
+	CKshatriyaArtifact *pArtifact = dynamic_cast<CKshatriyaArtifact*>( m_pEnt );
+	if ( pArtifact )
+	{
+		pArtifact->m_OnDroppedByNPC.Set( pParent, pParent, pParent );
+	}
+}
+
+void CAI_BaseNPC::CarriedObjectPreState::Drop(const Vector &origin, const QAngle &angles) const
+{
+	m_pEnt->SetParent( NULL );
+	m_pEnt->SetMoveType( m_iMovetype );
+	if ( !m_bNotSolidFlag )
+		m_pEnt->RemoveSolidFlags( FSOLID_NOT_SOLID );
+
+	IPhysicsObject *pPhys = m_pEnt->VPhysicsGetObject();
+	if ( pPhys )
+	{
+		pPhys->SetPosition( origin, angles, true );
+		//pPhys->Wake();
+	}
+	else
+	{
+		m_pEnt->SetAbsOrigin( origin );
+		m_pEnt->SetAbsAngles( angles );
+	}
+}
+#endif
