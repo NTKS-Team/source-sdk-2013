@@ -63,6 +63,7 @@ public:
 	CNetworkVar( float, m_flCrouchSlideTime );
 	// used for crouch-slide
 	CNetworkVector( m_vecGroundPlaneNormal );
+	CNetworkVar( float, m_flStartStopSprintTime );
 #endif
 	// Step sound side flip/flip
 	int m_nStepside;;
