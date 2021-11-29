@@ -4898,6 +4898,20 @@ void CGameMovement::Duck( void )
 				player->m_Local.m_flDucktime = GAMEMOVEMENT_DUCK_TIME;
 				player->m_Local.m_bDucking = true;
 			}
+#ifdef MOD_NTKS
+			else if ( ( buttonsPressed & IN_DUCK ) && player->m_Local.m_bDucking )
+			{
+				// Invert time if release before fully ducked!!!
+				float unduckMilliseconds = 1000.0f * TIME_TO_UNDUCK;
+				float duckMilliseconds = 1000.0f * TIME_TO_DUCK;
+				float elapsedMilliseconds = GAMEMOVEMENT_DUCK_TIME - player->m_Local.m_flDucktime;
+
+				float fracUnducked = elapsedMilliseconds / unduckMilliseconds;
+				float remainingDuckMilliseconds = fracUnducked * duckMilliseconds;
+
+				player->m_Local.m_flDucktime = GAMEMOVEMENT_DUCK_TIME - duckMilliseconds + remainingDuckMilliseconds;
+			}
+#endif
 			
 			// The player is in duck transition and not duck-jumping.
 			if ( player->m_Local.m_bDucking && !bDuckJump && !bDuckJumpTime )
@@ -4905,8 +4919,12 @@ void CGameMovement::Duck( void )
 				float flDuckMilliseconds = MAX( 0.0f, GAMEMOVEMENT_DUCK_TIME - ( float )player->m_Local.m_flDucktime );
 				float flDuckSeconds = flDuckMilliseconds * 0.001f;
 				
+#ifdef MOD_NTKS
+				if ( ( flDuckSeconds > TIME_TO_DUCK ) || bInAir )
+#else
 				// Finish in duck transition when transition time is over, in "duck", in air.
 				if ( ( flDuckSeconds > TIME_TO_DUCK ) || bInDuck || bInAir )
+#endif
 				{
 					FinishDuck();
 				}
