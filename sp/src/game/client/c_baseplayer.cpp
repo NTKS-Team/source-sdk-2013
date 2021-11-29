@@ -169,8 +169,9 @@ BEGIN_RECV_TABLE_NOBASE( CPlayerLocalData, DT_Local )
 	RecvPropFloat	(RECVINFO(m_flJumpTime)),
 #ifdef MOD_NTKS
 	RecvPropInt		(RECVINFO(m_iWallsJumped)),
-	RecvPropFloat	(RECVINFO(m_flCrouchSlideTime)),
+	RecvPropTime	(RECVINFO(m_flCrouchSlideTime)),
 	RecvPropVector	(RECVINFO(m_vecGroundPlaneNormal)),
+	RecvPropTime	(RECVINFO(m_flStartStopSprintTime)),
 #endif
 	RecvPropFloat	(RECVINFO(m_flFallVelocity)),
 
