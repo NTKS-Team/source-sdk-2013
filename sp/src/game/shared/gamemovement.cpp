@@ -1633,12 +1633,15 @@ bool CGameMovement::IsCrouchSliding( void ) const
 }
 
 static ConVar sv_crouch_slide_time( "sv_crouch_slide_time", "0.5", FCVAR_REPLICATED | FCVAR_CHEAT );
-static ConVar sv_crouch_slide_speed_threshold( "sv_crouch_slide_speed_threshold", "260", FCVAR_REPLICATED | FCVAR_CHEAT );
+static ConVar sv_crouch_slide_speed_threshold( "sv_crouch_slide_speed_threshold", "290", FCVAR_REPLICATED | FCVAR_CHEAT );
+static ConVar sv_crouch_slide_speed_threshold_sprint_factor( "sv_crouch_slide_speed_threshold_sprint_factor", "0.75", FCVAR_REPLICATED | FCVAR_CHEAT );
+static ConVar sv_crouch_slide_speed_threshold_sprint_factor_time( "sv_crouch_slide_speed_threshold_sprint_factor_time", "0.5", FCVAR_REPLICATED | FCVAR_CHEAT );
 static ConVar sv_crouch_slide_speed_cancel( "sv_crouch_slide_speed_cancel", "150", FCVAR_REPLICATED | FCVAR_CHEAT );
 static ConVar sv_crouch_slide_friction_mult( "sv_crouch_slide_friction_mult", "0.1", FCVAR_REPLICATED | FCVAR_CHEAT );
 #define GAMEMOVEMENT_CROUCH_SLIDE_TIME (sv_crouch_slide_time.GetFloat() + GAMEMOVEMENT_DUCK_TIME / 1000.0f)
+#define CROUCH_SLIDE_THRESHOLD_FACTOR (sv_crouch_slide_speed_threshold_sprint_factor.GetFloat() + Clamp( SpedSinceFactor( sv_crouch_slide_speed_threshold_sprint_factor_time.GetFloat() ), 0.0f, 1.0f ) * ( 1.0f - sv_crouch_slide_speed_threshold_sprint_factor.GetFloat() ))
 
-static bool CrouchSlideSpeedReached( Vector move, const Vector &surfaceNormal )
+static bool CrouchSlideSpeedReached( Vector move, const Vector &surfaceNormal, float thresholdFactor )
 {
 	float speed = VectorNormalize( move );
 
@@ -1650,10 +1653,10 @@ static bool CrouchSlideSpeedReached( Vector move, const Vector &surfaceNormal )
 	float steepness = DotProduct( move, surfaceNormal );
 	if ( steepness < -0.45f ) return false;
 	float slopeMod = ( Bias( steepness + 0.45f, 0.7f ) + 0.2f ) * 1.2f;
-	return speed * Min( slopeMod, 1.25f ) > sv_crouch_slide_speed_threshold.GetFloat();
+	return speed * Min( slopeMod, 1.25f ) > sv_crouch_slide_speed_threshold.GetFloat() * thresholdFactor;
 }
 
-static bool CrouchSlideSpeedReached( CBasePlayer *player )
+static bool CrouchSlideSpeedReached( CBasePlayer *player, float thresholdFactor )
 {
 	if ( !player->GetGroundEntity() )
 	{
@@ -1675,7 +1678,7 @@ static bool CrouchSlideSpeedReached( CBasePlayer *player )
 		return false;
 	}
 */
-	return CrouchSlideSpeedReached( player->GetAbsVelocity(), player->m_Local.m_vecGroundPlaneNormal );
+	return CrouchSlideSpeedReached( player->GetAbsVelocity(), player->m_Local.m_vecGroundPlaneNormal, thresholdFactor );
 }
 #endif
 
@@ -2141,6 +2144,10 @@ void CGameMovement::FullWalkMove( )
 		StartGravity();
 	}
 
+#ifdef MOD_NTKS
+	CheckSpeedButton();
+#endif
+
 	// If we are leaping out of the water, just update the counters.
 	if (player->m_flWaterJumpTime)
 	{
@@ -2502,6 +2509,26 @@ static Vector ToBBoxEdge2D( Vector origin, const Vector &mins, const Vector &max
 
 	return origin;
 }
+
+#ifdef MOD_NTKS
+float CGameMovement::SpedSinceFactor( float dt ) const
+{
+	if ( mv->m_nButtons & IN_SPEED )
+	{
+		return ( player->m_Local.m_flStartStopSprintTime + dt - gpGlobals->curtime ) / dt;
+	} else {
+		return ( gpGlobals->curtime - player->m_Local.m_flStartStopSprintTime ) / dt;
+	}
+}
+
+void CGameMovement::CheckSpeedButton( void )
+{
+	if ( ( mv->m_nOldButtons ^ mv->m_nButtons ) & IN_SPEED )
+	{
+		player->m_Local.m_flStartStopSprintTime = gpGlobals->curtime;
+	}
+}
+#endif
 
 //-----------------------------------------------------------------------------
 // Purpose: 
@@ -4033,7 +4060,7 @@ void CGameMovement::SetGroundEntity( trace_t *pm )
 			float newSteep = DotProduct( horMoveDir, pm->plane.normal );
 			if ( newSteep <= oldSteep )
 #else
-			if ( newGround != oldGround && !CrouchSlideSpeedReached( player->GetAbsVelocity(), pm->plane.normal ) )
+			if ( newGround != oldGround && !CrouchSlideSpeedReached( player->GetAbsVelocity(), pm->plane.normal, CROUCH_SLIDE_THRESHOLD_FACTOR ) )
 #endif
 			{
 				// cancel crouch slide
@@ -4648,14 +4675,6 @@ void CGameMovement::FinishDuck( void )
 	player->m_Local.m_bDucked = true;
 	player->m_Local.m_bDucking = false;
 
-#ifdef MOD_NTKS
-	if ( ( mv->m_nButtons & IN_DUCK ) )
-	{
-		player->m_Local.m_flCrouchSlideTime = 0.0f;
-		player->PlayCrouchSlideSound( NULL );
-	}
-#endif
-
 	player->SetViewOffset( GetPlayerViewOffset( true ) );
 
 	// HACKHACK - Fudge for collision bug - no time to fix this properly
@@ -4867,7 +4886,7 @@ void CGameMovement::Duck( void )
 			}
 #endif
 #ifdef MOD_NTKS
-			if ( !bInDuck && !player->m_Local.m_flCrouchSlideTime && CrouchSlideSpeedReached( player ) )
+			if ( !bInDuck && !player->m_Local.m_flCrouchSlideTime && CrouchSlideSpeedReached( player, CROUCH_SLIDE_THRESHOLD_FACTOR ) )
 			{
 				player->m_Local.m_flCrouchSlideTime = gpGlobals->curtime + GAMEMOVEMENT_CROUCH_SLIDE_TIME;
 				player->PlayCrouchSlideSound( player->m_pSurfaceData );
@@ -4879,6 +4898,20 @@ void CGameMovement::Duck( void )
 				player->m_Local.m_flDucktime = GAMEMOVEMENT_DUCK_TIME;
 				player->m_Local.m_bDucking = true;
 			}
+#ifdef MOD_NTKS
+			else if ( ( buttonsPressed & IN_DUCK ) && player->m_Local.m_bDucking )
+			{
+				// Invert time if release before fully ducked!!!
+				float unduckMilliseconds = 1000.0f * TIME_TO_UNDUCK;
+				float duckMilliseconds = 1000.0f * TIME_TO_DUCK;
+				float elapsedMilliseconds = GAMEMOVEMENT_DUCK_TIME - player->m_Local.m_flDucktime;
+
+				float fracUnducked = elapsedMilliseconds / unduckMilliseconds;
+				float remainingDuckMilliseconds = fracUnducked * duckMilliseconds;
+
+				player->m_Local.m_flDucktime = GAMEMOVEMENT_DUCK_TIME - duckMilliseconds + remainingDuckMilliseconds;
+			}
+#endif
 			
 			// The player is in duck transition and not duck-jumping.
 			if ( player->m_Local.m_bDucking && !bDuckJump && !bDuckJumpTime )
@@ -4886,8 +4919,12 @@ void CGameMovement::Duck( void )
 				float flDuckMilliseconds = MAX( 0.0f, GAMEMOVEMENT_DUCK_TIME - ( float )player->m_Local.m_flDucktime );
 				float flDuckSeconds = flDuckMilliseconds * 0.001f;
 				
+#ifdef MOD_NTKS
+				if ( ( flDuckSeconds > TIME_TO_DUCK ) || bInAir )
+#else
 				// Finish in duck transition when transition time is over, in "duck", in air.
 				if ( ( flDuckSeconds > TIME_TO_DUCK ) || bInDuck || bInAir )
+#endif
 				{
 					FinishDuck();
 				}
@@ -4948,15 +4985,14 @@ void CGameMovement::Duck( void )
 
 			if ( bDuckJumpTime )
 				return;
-#ifdef MOD_NTKS
-			if ( IsCrouchSliding() )
-				return;
-#endif
 
 			// Try to unduck unless automovement is not allowed
 			// NOTE: When not onground, you can always unduck
 			if ( player->m_Local.m_bAllowAutoMovement || bInAir || player->m_Local.m_bDucking )
 			{
+#ifdef MOD_NTKS
+				if ( !IsCrouchSliding() )
+#endif
 				// We released the duck button, we aren't in "duck" and we are not in the air - start unduck transition.
 				if ( ( buttonsReleased & IN_DUCK ) )
 				{

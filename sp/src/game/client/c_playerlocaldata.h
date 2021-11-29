@@ -54,6 +54,7 @@ public:
 	float					m_flCrouchSlideTime;
 	// used for crouch-slide
 	Vector					m_vecGroundPlaneNormal;
+	float					m_flStartStopSprintTime;
 #endif
 	int						m_nStepside;
 	float					m_flFallVelocity;
