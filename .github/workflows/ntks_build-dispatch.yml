@@ -1,0 +1,24 @@
+name: Build NTKS Game Projects (Manual)
+
+on:
+  workflow_dispatch:
+    inputs:
+      configuration:
+        description: 'Which configuration to build with'
+        default: 'Release'
+        required: true
+        type: choice
+        options:
+        - Release
+        - Debug
+
+jobs:
+  build_manual:
+    uses: ./.github/workflows/mapbase_build-base.yml
+    with:
+      configuration: '${{ github.event.inputs.configuration }}'
+      branch: 'sp'
+      game: 'ntks'
+      project-group: 'game'
+      solution-name: 'games_ntks'
+      build-on-linux: true

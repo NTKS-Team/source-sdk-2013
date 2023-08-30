@@ -1,8 +1,8 @@
 static char g_Script_vscript_squirrel[] = R"vscript(
 //========= Mapbase - https://github.com/mapbase-source/source-sdk-2013 ============//
 //
-// Purpose: 
-// 
+// Purpose:
+//
 //=============================================================================//
 
 Warning <- error;
@@ -152,119 +152,148 @@ Hooks <-
 	// table, string, closure, string
 	function Add( scope, event, callback, context )
 	{
+		switch ( typeof scope )
+		{
+			case "table":
+			case "instance":
+			case "class":
+				break;
+			default:
+				throw "invalid scope param";
+		}
+
+		if ( typeof event != "string" )
+			throw "invalid event param";
+
 		if ( typeof callback != "function" )
-			throw "invalid callback param"
+			throw "invalid callback param";
 
-		if ( !(scope in s_List) )
-			s_List[scope] <- {}
+		if ( typeof context != "string" )
+			throw "invalid context param";
 
-		local t = s_List[scope]
+		if ( !(event in s_List) )
+			s_List[event] <- {};
 
-		if ( !(event in t) )
-			t[event] <- {}
+		local t = s_List[event];
 
-		t[event][context] <- callback
+		if ( !(scope in t) )
+			t[scope] <- {};
+
+		t[scope][context] <- callback;
+
+		return __UpdateHooks();
 	}
 
-	function Remove( context, event = null )
+	function Remove( event, context )
 	{
+		local rem;
+
 		if ( event )
 		{
-			foreach( k,scope in s_List )
+			if ( event in s_List )
 			{
-				if ( event in scope )
+				foreach ( scope, ctx in s_List[event] )
 				{
-					local t = scope[event]
-					if ( context in t )
+					if ( context in ctx )
 					{
-						delete t[context]
+						delete ctx[context];
 					}
 
-					// cleanup?
-					if ( !t.len() )
-						delete scope[event]
+					if ( !ctx.len() )
+					{
+						if ( !rem )
+							rem = [];
+						rem.append( event );
+						rem.append( scope );
+					}
 				}
-
-				// cleanup?
-				if ( !scope.len() )
-					delete s_List[k]
 			}
 		}
 		else
 		{
-			foreach( k,scope in s_List )
+			foreach ( ev, t in s_List )
 			{
-				foreach( kk,ev in scope )
+				foreach ( scope, ctx in t )
 				{
-					if ( context in ev )
+					if ( context in ctx )
 					{
-						delete ev[context]
+						delete ctx[context];
 					}
 
-					// cleanup?
-					if ( !ev.len() )
-						delete scope[kk]
-				}
-
-				// cleanup?
-				if ( !scope.len() )
-					delete s_List[k]
-			}
-		}
-	}
-
-	function Call( scope, event, ... )
-	{
-		local firstReturn = null
-
-		if ( scope == null )
-		{
-			// null scope = global hook; call all scopes
-			vargv.insert(0,this)
-			foreach ( t in s_List )
-			{
-				if ( event in t )
-				{
-					foreach( context, callback in t[event] )
+					if ( !ctx.len() )
 					{
-						//printf( "(%.4f) Calling hook '%s' of context '%s' in static iteration\n", Time(), event, context )
-
-						local curReturn = callback.acall(vargv)
-						if (firstReturn == null)
-							firstReturn = curReturn
+						if ( !rem )
+							rem = [];
+						rem.append( ev );
+						rem.append( scope );
 					}
 				}
 			}
 		}
-		else if ( scope in s_List )
-		{
-			local t = s_List[scope]
-			if ( event in t )
-			{
-				vargv.insert(0,scope)
-				foreach( context, callback in t[event] )
-				{
-					//printf( "(%.4f) Calling hook '%s' of context '%s'\n", Time(), event, context )
 
-					local curReturn = callback.acall(vargv)
-					if (firstReturn == null)
-						firstReturn = curReturn
+		if ( rem )
+		{
+			local c = rem.len() - 1;
+			for ( local i = 0; i < c; i += 2 )
+			{
+				local ev = rem[i];
+				local scope = rem[i+1];
+
+				if ( !s_List[ev][scope].len() )
+					delete s_List[ev][scope];
+
+				if ( !s_List[ev].len() )
+					delete s_List[ev];
+			}
+		}
+
+		return __UpdateHooks();
+	}
+
+	function Call( event, scope, ... )
+	{
+		local firstReturn;
+
+		if ( event in s_List )
+		{
+			vargv.insert( 0, scope );
+
+			local t = s_List[event];
+			if ( scope in t )
+			{
+				foreach ( fn in t[scope] )
+				{
+					//printf( "(%.4f) Calling hook %s:%s\n", Time(), event, context );
+
+					local r = fn.acall( vargv );
+					if ( firstReturn == null )
+						firstReturn = r;
+				}
+			}
+			else if ( !scope ) // global hook
+			{
+				foreach ( sc, ctx in t )
+				{
+					vargv[0] = sc;
+
+					foreach ( context, fn in ctx )
+					{
+						//printf( "(%.4f) Calling hook (g) %s:%s\n", Time(), event, context );
+
+						local r = fn.acall( vargv );
+						if ( firstReturn == null )
+							firstReturn = r;
+					}
 				}
 			}
 		}
 
-		return firstReturn
+		return firstReturn;
 	}
 
-	function ScopeHookedToEvent( scope, event )
+	function __UpdateHooks()
 	{
-		if ( scope in s_List )
-		{
-			if (event in s_List[scope])
-				return true
-		}
-
-		return false
+		return __UpdateScriptHooks( s_List );
 	}
 }
 
@@ -452,20 +481,28 @@ if (developer)
 		printdocl(text);
 	}
 
-	local function PrintMatchesInDocList(pattern, list, printfunc)
+	local function PrintMatches( pattern, docs, printfunc )
 	{
-		local foundMatches = 0;
+		local matches = [];
+		local always = pattern == "*";
 
-		foreach(name, doc in list)
+		foreach( name, doc in docs )
 		{
-			if (pattern == "*" || name.tolower().find(pattern) != null || (doc[1].len() && doc[1].tolower().find(pattern) != null))
+			if (always || name.tolower().find(pattern) != null || (doc[1].len() && doc[1].tolower().find(pattern) != null))
 			{
-				foundMatches = 1;
-				printfunc(name, doc)
+				matches.append( name );
 			}
 		}
 
-		return foundMatches;
+		if ( !matches.len() )
+			return 0;
+
+		matches.sort();
+
+		foreach( name in matches )
+			printfunc( name, docs[name] );
+
+		return 1;
 	}
 
 	function __Documentation::PrintHelp(pattern = "*")
@@ -474,12 +511,12 @@ if (developer)
 
 		// Have a specific order
 		if (!(
-			PrintMatchesInDocList( patternLower, DocumentedEnums, PrintEnum )		|
-			PrintMatchesInDocList( patternLower, DocumentedConsts, PrintConst )		|
-			PrintMatchesInDocList( patternLower, DocumentedClasses, PrintClass )	|
-			PrintMatchesInDocList( patternLower, DocumentedFuncs, PrintFunc )		|
-			PrintMatchesInDocList( patternLower, DocumentedMembers, PrintMember )	|
-			PrintMatchesInDocList( patternLower, DocumentedHooks, PrintHook )
+			PrintMatches( patternLower, DocumentedEnums, PrintEnum )		|
+			PrintMatches( patternLower, DocumentedConsts, PrintConst )		|
+			PrintMatches( patternLower, DocumentedClasses, PrintClass )		|
+			PrintMatches( patternLower, DocumentedFuncs, PrintFunc )		|
+			PrintMatches( patternLower, DocumentedMembers, PrintMember )	|
+			PrintMatches( patternLower, DocumentedHooks, PrintHook )
 		   ))
 		{
 			printdocl("Pattern " + pattern + " not found");
@@ -503,7 +540,6 @@ else
 
 if (developer)
 {
-	// Vector documentation
 	__Documentation.RegisterClassHelp( "Vector", "", "Basic 3-float Vector class." );
 	__Documentation.RegisterHelp( "Vector::Length", "float Vector::Length()", "Return the vector's length." );
 	__Documentation.RegisterHelp( "Vector::LengthSqr", "float Vector::LengthSqr()", "Return the vector's squared length." );

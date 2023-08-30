@@ -1,0 +1,32 @@
+name: Build NTKS Game Projects
+
+on:
+  push:
+    branches:
+      - '**'
+      # these are mapbase branches, the rest are NTKS
+      - '!master'
+      - '!develop'
+    paths:
+      - '.github/workflows/ntks.yml'
+      - 'sp/src/vpc_scripts/**'
+      - 'sp/src/game/**'
+      - 'sp/src/mathlib/**'
+      - 'sp/src/responserules/runtime/**'
+      - 'sp/src/tier1/**'
+      - 'sp/src/vgui2/vgui_controls/**'
+      - 'sp/src/vscript/**'
+
+jobs:
+  games:
+    strategy:
+      matrix:
+        configuration: [Release, Debug]
+    uses: ./.github/workflows/mapbase_build-base.yml
+    with:
+      configuration: ${{ matrix.configuration }}
+      branch: 'sp'
+      game: 'ntks'
+      project-group: 'game'
+      solution-name: 'games_ntks'
+      build-on-linux: true # Disable this if you don't want to compile for Linux

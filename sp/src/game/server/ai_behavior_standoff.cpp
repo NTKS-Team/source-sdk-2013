@@ -296,7 +296,12 @@ bool CAI_StandoffBehavior::CanSelectSchedule()
 	if ( !m_fActive )
 		return false;
 		
+#ifdef MAPBASE
+	// Allow NPCs with innate range attacks to use standoffs
+	return ( GetNpcState() == NPC_STATE_COMBAT && (GetOuter()->GetActiveWeapon() != NULL || GetOuter()->CapabilitiesGet() & bits_CAP_INNATE_RANGE_ATTACK1) );
+#else
 	return ( GetNpcState() == NPC_STATE_COMBAT && GetOuter()->GetActiveWeapon() != NULL );
+#endif
 }
 
 //-------------------------------------
@@ -558,7 +563,7 @@ int CAI_StandoffBehavior::SelectScheduleEstablishAim( void )
 {
 	if ( HasCondition( COND_ENEMY_OCCLUDED ) )
 	{
-#ifdef EXPANDED_HL2_COVER_ACTIVITIES
+#if EXPANDED_HL2_COVER_ACTIVITIES
 		if ( GetPosture() == AIP_CROUCHING || GetPosture() == AIP_CROUCHING_MED )
 #else
 		if ( GetPosture() == AIP_CROUCHING )
@@ -600,7 +605,11 @@ int CAI_StandoffBehavior::SelectScheduleAttack( void )
 			 !HasCondition( COND_CAN_MELEE_ATTACK1 ) &&
 			  HasCondition( COND_TOO_FAR_TO_ATTACK ) )
 		{
+#ifdef MAPBASE
+			if ( (GetOuter()->GetActiveWeapon() && ( GetOuter()->GetActiveWeapon()->CapabilitiesGet() & bits_CAP_WEAPON_RANGE_ATTACK1 )) || GetOuter()->CapabilitiesGet() & bits_CAP_INNATE_RANGE_ATTACK1 )
+#else
 			if ( GetOuter()->GetActiveWeapon() && ( GetOuter()->GetActiveWeapon()->CapabilitiesGet() & bits_CAP_WEAPON_RANGE_ATTACK1 ) )
+#endif
 			{
 				if ( !HasCondition( COND_ENEMY_OCCLUDED ) || random->RandomInt(0,99) < 50 )
 					// Don't advance, just fire anyway
@@ -673,7 +682,7 @@ Activity CAI_MappedActivityBehavior_Temporary::GetMappedActivity( AI_Posture_t p
 {
 	if ( posture != AIP_STANDING )
 	{
-#ifdef EXPANDED_HL2_COVER_ACTIVITIES
+#if EXPANDED_HL2_COVER_ACTIVITIES
 		// See UpdateTranslateActivityMap() for more information on what this is for
 		if ( posture == AIP_CROUCHING_MED )
 		{
@@ -1121,7 +1130,7 @@ void CAI_StandoffBehavior::UnlockHintNode()
 
 Activity CAI_StandoffBehavior::GetCoverActivity()
 {
-#ifdef EXPANDED_HL2_COVER_ACTIVITIES
+#if EXPANDED_HL2_COVER_ACTIVITIES
 	// GetCoverActivity() already checks everything we checked here.
 	Activity coverActivity = GetOuter()->GetCoverActivity( GetHintNode() );
 
@@ -1186,7 +1195,7 @@ void CAI_MappedActivityBehavior_Temporary::UpdateTranslateActivityMap()
 		{	AIP_CROUCHING,	ACT_RANGE_ATTACK_AR2,	NULL,				ACT_RANGE_ATTACK_AR2_LOW,	},
 #endif
 		
-#ifdef EXPANDED_HL2_COVER_ACTIVITIES
+#if EXPANDED_HL2_COVER_ACTIVITIES
 		// 
 		// ============ Really long explanation that should be in a wiki/documentation article somewhere ~ Blixibon, 10/27/2021 ============
 		// 

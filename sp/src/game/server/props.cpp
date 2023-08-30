@@ -2283,11 +2283,7 @@ bool CDynamicProp::TestCollision( const Ray_t &ray, unsigned int mask, trace_t& 
 			}
 		}
 	}
-#ifdef MAPBASE // From Alien Swarm SDK
-	return BaseClass::TestCollision( ray, mask, trace );
-#else
 	return false;
-#endif
 }
 
 
@@ -2800,7 +2796,7 @@ void CInteractableProp::Precache( void )
 //			useType - 
 //			value - 
 //-----------------------------------------------------------------------------
-void CInteractableProp::Use( CBaseEntity *pActivator, CBaseEntity *pCaller, USE_TYPE useType, float value )
+void CInteractableProp::Use(CBaseEntity *pActivator, CBaseEntity *pCaller, USE_TYPE useType, float value)
 {
 	if (m_flCooldownTime > gpGlobals->curtime)
 		return;
@@ -2808,18 +2804,18 @@ void CInteractableProp::Use( CBaseEntity *pActivator, CBaseEntity *pCaller, USE_
 	// If we're using +USE mins/maxs, make sure this is being +USE'd from the right place
 	if (m_vecUseMins.LengthSqr() != 0.0f && m_vecUseMaxs.LengthSqr() != 0.0f)
 	{
-		CBasePlayer *pPlayer = ToBasePlayer( pActivator );
+		CBasePlayer *pPlayer = ToBasePlayer(pActivator);
 		if (pPlayer)
 		{
 			Vector forward;
-			pPlayer->EyeVectors( &forward, NULL, NULL );
+			pPlayer->EyeVectors(&forward, NULL, NULL);
 
 			// This might be a little convoluted and/or seem needlessly expensive, but I couldn't figure out any better way to do this.
 			// TOOD: Can we calculate a box in local space instead of world space?
 			Vector vecWorldMins, vecWorldMaxs;
-			RotateAABB( EntityToWorldTransform(), m_vecUseMins, m_vecUseMaxs, vecWorldMins, vecWorldMaxs );
-			TransformAABB( EntityToWorldTransform(), vecWorldMins, vecWorldMaxs, vecWorldMins, vecWorldMaxs );
-			if (!IsBoxIntersectingRay( vecWorldMins, vecWorldMaxs, pPlayer->EyePosition(), forward * 1024 ))
+			RotateAABB(EntityToWorldTransform(), m_vecUseMins, m_vecUseMaxs, vecWorldMins, vecWorldMaxs);
+			TransformAABB(EntityToWorldTransform(), vecWorldMins, vecWorldMaxs, vecWorldMins, vecWorldMaxs);
+			if (!IsBoxIntersectingRay(vecWorldMins, vecWorldMaxs, pPlayer->EyePosition(), forward * 1024))
 			{
 				// Reject this +USE if it's not in our box
 				DevMsg("Outside of +USE box\n");
@@ -2832,28 +2828,36 @@ void CInteractableProp::Use( CBaseEntity *pActivator, CBaseEntity *pCaller, USE_
 
 	if (m_bLocked)
 	{
-		m_OnLockedUse.FireOutput( pActivator, this );
+		m_OnLockedUse.FireOutput(pActivator, this);
 		EmitSound(STRING(m_iszLockedSound));
-		nSequence = LookupSequence( STRING( m_iszLockedSequence ) );
+		nSequence = LookupSequence(STRING(m_iszLockedSequence));
 		m_iCurSequence = INTERACTSEQ_LOCKED;
 	}
 	else
 	{
-		m_OnPressed.FireOutput( pActivator, this );
+		m_OnPressed.FireOutput(pActivator, this);
 		EmitSound(STRING(m_iszPressedSound));
-		nSequence = LookupSequence( STRING( m_iszInSequence ) );
+		nSequence = LookupSequence(STRING(m_iszInSequence));
 		m_iCurSequence = INTERACTSEQ_IN;
 	}
 
-	if ( nSequence > ACTIVITY_NOT_AVAILABLE )
+	if (nSequence > ACTIVITY_NOT_AVAILABLE)
 	{
 		SetPushSequence(nSequence);
 
 		// We still fire our inherited animation outputs
-		m_pOutputAnimBegun.FireOutput( pActivator, this );
+		m_pOutputAnimBegun.FireOutput(pActivator, this);
 	}
 
-	m_flCooldownTime = gpGlobals->curtime + m_flCooldown;
+	if (m_flCooldown == -1 && !m_bLocked){
+		m_flCooldownTime = FLT_MAX; // yeah we're not going to hit this any time soon
+	}
+	else if (m_flCooldown == -1){
+		m_flCooldownTime = gpGlobals->curtime + 1.0f; // 1s cooldown if locked
+	}
+	else{
+		m_flCooldownTime = gpGlobals->curtime + m_flCooldown;
+	}
 }
 
 //-----------------------------------------------------------------------------
@@ -4139,6 +4143,11 @@ enum
 
 void PlayLockSounds(CBaseEntity *pEdict, locksound_t *pls, int flocked, int fbutton);
 
+#ifdef MAPBASE
+ConVar ai_door_enable_acts( "ai_door_enable_acts", "0", FCVAR_NONE, "Enables the new door-opening activities by default. Override keyvalues will override this cvar." );
+ConVar ai_door_open_dist_override( "ai_door_open_dist_override", "-1", FCVAR_NONE, "Overrides the distance from a door a NPC has to navigate to in order to open a door." );
+#endif
+
 BEGIN_DATADESC_NO_BASE(locksound_t)
 
 	DEFINE_FIELD( sLockedSound,	FIELD_STRING),
@@ -4290,6 +4299,32 @@ void CBasePropDoor::Precache(void)
 }
 
 
+#ifdef MAPBASE
+//-----------------------------------------------------------------------------
+// Purpose: Handles keyvalues from the BSP. Called before spawning.
+//-----------------------------------------------------------------------------
+bool CBasePropDoor::KeyValue( const char *szKeyName, const char *szValue )
+{
+	if ( FStrEq(szKeyName, "openfrontactivityoverride") )
+	{
+		m_eNPCOpenFrontActivity = (Activity)CAI_BaseNPC::GetActivityID( szValue );
+		if (m_eNPCOpenFrontActivity == ACT_INVALID)
+			m_eNPCOpenFrontActivity = ActivityList_RegisterPrivateActivity( szValue );
+	}
+	else if ( FStrEq(szKeyName, "openbackactivityoverride") )
+	{
+		m_eNPCOpenBackActivity = (Activity)CAI_BaseNPC::GetActivityID( szValue );
+		if (m_eNPCOpenBackActivity == ACT_INVALID)
+			m_eNPCOpenBackActivity = ActivityList_RegisterPrivateActivity( szValue );
+	}
+	else
+		return BaseClass::KeyValue( szKeyName, szValue );
+
+	return true;
+}
+#endif
+
+
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
@@ -4418,31 +4453,41 @@ void CBasePropDoor::CalcDoorSounds()
 				strSoundUnlocked = AllocPooledString( pkvHardwareData->GetString( "unlocked" ) );
 
 #ifdef MAPBASE
-				if (m_eNPCOpenFrontActivity == ACT_INVALID)
+				if (ai_door_enable_acts.GetBool())
 				{
-					const char *pszActivity = pkvHardwareData->GetString( "activity_front" );
-					if (pszActivity[0] != '\0')
+					if (m_eNPCOpenFrontActivity == ACT_INVALID)
 					{
-						m_eNPCOpenFrontActivity = (Activity)CAI_BaseNPC::GetActivityID( pszActivity );
-						if (m_eNPCOpenFrontActivity == ACT_INVALID)
-							m_eNPCOpenFrontActivity = ActivityList_RegisterPrivateActivity( pszActivity );
+						const char *pszActivity = pkvHardwareData->GetString( "activity_front" );
+						if (pszActivity[0] != '\0')
+						{
+							m_eNPCOpenFrontActivity = (Activity)CAI_BaseNPC::GetActivityID( pszActivity );
+							if (m_eNPCOpenFrontActivity == ACT_INVALID)
+								m_eNPCOpenFrontActivity = ActivityList_RegisterPrivateActivity( pszActivity );
+						}
 					}
-				}
-				if (m_eNPCOpenBackActivity == ACT_INVALID)
-				{
-					const char *pszActivity = pkvHardwareData->GetString( "activity_back" );
-					if (pszActivity[0] != '\0')
+					if (m_eNPCOpenBackActivity == ACT_INVALID)
 					{
-						m_eNPCOpenBackActivity = (Activity)CAI_BaseNPC::GetActivityID( pszActivity );
-						if (m_eNPCOpenBackActivity == ACT_INVALID)
-							m_eNPCOpenBackActivity = ActivityList_RegisterPrivateActivity( pszActivity );
+						const char *pszActivity = pkvHardwareData->GetString( "activity_back" );
+						if (pszActivity[0] != '\0')
+						{
+							m_eNPCOpenBackActivity = (Activity)CAI_BaseNPC::GetActivityID( pszActivity );
+							if (m_eNPCOpenBackActivity == ACT_INVALID)
+								m_eNPCOpenBackActivity = ActivityList_RegisterPrivateActivity( pszActivity );
+						}
 					}
 				}
 
 				if (m_flNPCOpenDistance == -1)
-					m_flNPCOpenDistance = pkvHardwareData->GetFloat( "npc_distance", 32.0 );
+					m_flNPCOpenDistance = pkvHardwareData->GetFloat( "npc_distance", ai_door_enable_acts.GetBool() ? 32.0 : 64.0 );
 #endif
 			}
+
+#ifdef MAPBASE
+			// This would still be -1 if the hardware wasn't valid
+			if (m_flNPCOpenDistance == -1)
+				m_flNPCOpenDistance = ai_door_enable_acts.GetBool() ? 32.0 : 64.0;
+#endif
+
 
 			// If any sounds were missing, try the "defaults" block.
 			if ( ( strSoundOpen == NULL_STRING ) || ( strSoundClose == NULL_STRING ) || ( strSoundMoving == NULL_STRING ) ||
@@ -6042,11 +6087,6 @@ void CPropDoorRotating::DoorResume( void )
 	AngularMove( m_angGoal, m_flSpeed );
 }
 
-#ifdef MAPBASE
-ConVar ai_door_enable_acts( "ai_door_enable_acts", "1", FCVAR_NONE, "Enables the new door-opening activities." );
-ConVar ai_door_open_dist_override( "ai_door_open_dist_override", "-1", FCVAR_NONE, "Overrides the distance from a door a NPC has to navigate to in order to open a door." );
-#endif
-
 //-----------------------------------------------------------------------------
 // Purpose: 
 // Input  : vecMoveDir - 
@@ -6080,7 +6120,7 @@ void CPropDoorRotating::GetNPCOpenData(CAI_BaseNPC *pNPC, opendata_t &opendata)
 		opendata.vecStandPos += vecForward * flPosOffset;
 		opendata.vecFaceDir = -vecForward;
 #ifdef MAPBASE
-		opendata.eActivity = !ai_door_enable_acts.GetBool() ? ACT_INVALID : GetNPCOpenFrontActivity();
+		opendata.eActivity = GetNPCOpenFrontActivity();
 #endif
 	}
 	else
@@ -6089,7 +6129,7 @@ void CPropDoorRotating::GetNPCOpenData(CAI_BaseNPC *pNPC, opendata_t &opendata)
 		opendata.vecStandPos -= vecForward * flPosOffset;
 		opendata.vecFaceDir = vecForward;
 #ifdef MAPBASE
-		opendata.eActivity = !ai_door_enable_acts.GetBool() ? ACT_INVALID : GetNPCOpenBackActivity();
+		opendata.eActivity = GetNPCOpenBackActivity();
 #endif
 	}
 

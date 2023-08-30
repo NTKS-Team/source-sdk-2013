@@ -1509,7 +1509,8 @@ void CResponseSystem::ParseInclude()
 
 	if (len+1 != strlen(scriptfile))
 	{
-		Q_snprintf(includefile, sizeof(includefile), "%s/%s", includefile, token);
+		Q_strncat( includefile, "/", sizeof( includefile ) );
+		Q_strncat( includefile, token, sizeof( includefile ) );
 	}
 	else
 		includefile[0] = '\0';
@@ -1985,7 +1986,14 @@ void CResponseSystem::ParseResponse( void )
 
 	while ( 1 )
 	{
+#ifdef MAPBASE
+		if ( !ParseToken() || !Q_stricmp( token, "}" ) )
+		{
+			break;
+		}
+#else
 		ParseToken();
+#endif
 
 		unsigned int hash = RR_HASH( token );
 
@@ -2048,7 +2056,14 @@ int CResponseSystem::ParseOneCriterion( const char *criterionName )
 
 	while ( TokenWaiting() || !gotbody )
 	{
+#ifdef MAPBASE
+		if ( !ParseToken() )
+		{
+			break;
+		}
+#else
 		ParseToken();
+#endif
 
 		// Oops, part of next definition
 		if( IsRootCommand() )

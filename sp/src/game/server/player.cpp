@@ -551,6 +551,8 @@ BEGIN_ENT_SCRIPTDESC( CBasePlayer, CBaseCombatCharacter, "The player entity." )
 	DEFINE_SCRIPTFUNC_NAMED( ScriptGetEyeRight, "GetEyeRight", "Gets the player's right eye vector." )
 	DEFINE_SCRIPTFUNC_NAMED( ScriptGetEyeUp, "GetEyeUp", "Gets the player's up eye vector." )
 
+	DEFINE_SCRIPTFUNC_NAMED( ScriptGetViewModel, "GetViewModel", "Returns the viewmodel of the specified index." )
+
 	// 
 	// Hooks
 	// 
@@ -632,6 +634,10 @@ void CBasePlayer::DestroyViewModels( void )
 }
 
 #ifdef MAPBASE
+extern char g_szDefaultHandsModel[MAX_PATH];
+extern int g_iDefaultHandsSkin;
+extern int g_iDefaultHandsBody;
+
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
@@ -639,8 +645,14 @@ void CBasePlayer::CreateHandModel(int index, int iOtherVm)
 {
 	Assert(index >= 0 && index < MAX_VIEWMODELS && iOtherVm >= 0 && iOtherVm < MAX_VIEWMODELS );
 
-	if (GetViewModel(index))
+	if (GetViewModel( index ))
+	{
+		// This can happen if the player respawns
+		// Don't draw unless we're already using a hands weapon
+		if ( !GetActiveWeapon() || !GetActiveWeapon()->UsesHands() )
+			GetViewModel( index )->AddEffects( EF_NODRAW );
 		return;
+	}
 
 	CBaseViewModel *vm = (CBaseViewModel *)CreateEntityByName("hand_viewmodel");
 	if (vm)
@@ -648,9 +660,15 @@ void CBasePlayer::CreateHandModel(int index, int iOtherVm)
 		vm->SetAbsOrigin(GetAbsOrigin());
 		vm->SetOwner(this);
 		vm->SetIndex(index);
+
+		vm->SetModel( g_szDefaultHandsModel );
+		vm->m_nSkin = g_iDefaultHandsSkin;
+		vm->m_nBody = g_iDefaultHandsBody;
+
 		DispatchSpawn(vm);
 		vm->FollowEntity(GetViewModel(iOtherVm), true);
 		m_hViewModel.Set(index, vm);
+		vm->AddEffects( EF_NODRAW );
 	}
 }
 #endif
@@ -1706,6 +1724,15 @@ void CBasePlayer::RemoveAllItems( bool removeSuit )
 	Weapon_SetLast( NULL );
 	RemoveAllWeapons();
  	RemoveAllAmmo();
+
+#ifdef MAPBASE
+	// Hide hand viewmodel
+	CBaseViewModel *vm = GetViewModel( 1 );
+	if ( vm )
+	{
+		vm->AddEffects( EF_NODRAW );
+	}
+#endif
 
 	if ( removeSuit )
 	{
@@ -5418,6 +5445,10 @@ void CBasePlayer::Precache( void )
 	m_iTrain = TRAIN_NEW;
 #endif
 
+#ifdef MAPBASE
+	PrecacheModel( g_szDefaultHandsModel );
+#endif
+
 	m_iClientBattery = -1;
 
 	m_iUpdateTime = 5;  // won't update for 1/2 a second
@@ -7135,6 +7166,19 @@ HSCRIPT CBasePlayer::VScriptGetExpresser()
 
 	return hScript;
 }
+
+//-----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
+HSCRIPT CBasePlayer::ScriptGetViewModel( int viewmodelindex )
+{
+	if (viewmodelindex < 0 || viewmodelindex >= MAX_VIEWMODELS)
+	{
+		Warning( "GetViewModel: Invalid index '%i'\n", viewmodelindex );
+		return NULL;
+	}
+
+	return ToHScript( GetViewModel( viewmodelindex ) );
+}
 #endif
 
 //-----------------------------------------------------------------------------
@@ -7836,10 +7880,10 @@ Activity CBasePlayer::Weapon_TranslateActivity( Activity baseAct, bool *pRequire
 		// Our weapon is holstered. Use the base activity.
 		return baseAct;
 	}
-	if ( GetModelPtr() && !GetModelPtr()->HaveSequenceForActivity(weaponTranslation) )
+	if ( GetModelPtr() && (!GetModelPtr()->HaveSequenceForActivity(weaponTranslation) || baseAct == weaponTranslation) )
 	{
 		// This is used so players can fall back to backup activities in the same way NPCs in Mapbase can
-		Activity backupActivity = Weapon_BackupActivity(baseAct, pRequired);
+		Activity backupActivity = Weapon_BackupActivity(baseAct, pRequired ? *pRequired : false);
 		if ( baseAct != backupActivity && GetModelPtr()->HaveSequenceForActivity(backupActivity) )
 			return backupActivity;
 

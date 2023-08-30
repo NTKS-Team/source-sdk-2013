@@ -188,9 +188,8 @@ public:
 	//--------------------------------------------------------
 	// Hooks
 	//--------------------------------------------------------
-	virtual bool ScopeIsHooked( HSCRIPT hScope, const char *pszEventName ) override;
-	virtual HSCRIPT LookupHookFunction( const char *pszEventName, HSCRIPT hScope, bool &bLegacy ) override;
-	virtual ScriptStatus_t ExecuteHookFunction( const char *pszEventName, HSCRIPT hFunction, ScriptVariant_t *pArgs, int nArgs, ScriptVariant_t *pReturn, HSCRIPT hScope, bool bWait ) override;
+	virtual HScriptRaw HScriptToRaw( HSCRIPT val ) override;
+	virtual ScriptStatus_t ExecuteHookFunction( const char *pszEventName, ScriptVariant_t *pArgs, int nArgs, ScriptVariant_t *pReturn, HSCRIPT hScope, bool bWait ) override;
 
 	//--------------------------------------------------------
 	// External functions
@@ -1091,16 +1090,14 @@ bool CreateParamCheck(const ScriptFunctionBinding_t& func, char* output)
 		switch (func.m_desc.m_Parameters[i])
 		{
 		case FIELD_FLOAT:
-			*output++ = 'n'; // NOTE: Can be int or float
+		case FIELD_INTEGER:
+			*output++ = 'n';
 			break;
 		case FIELD_CSTRING:
 			*output++ = 's';
 			break;
 		case FIELD_VECTOR:
 			*output++ = 'x'; // Generic instance, we validate on arrival
-			break;
-		case FIELD_INTEGER:
-			*output++ = 'i'; // could use 'n' also which is int or float
 			break;
 		case FIELD_BOOLEAN:
 			*output++ = 'b';
@@ -1701,7 +1698,9 @@ struct SquirrelSafeCheck
 
 	~SquirrelSafeCheck()
 	{
-		if (top_ != (sq_gettop(vm_) - outputCount_))
+		SQInteger curtop = sq_gettop(vm_);
+		SQInteger diff = curtop - outputCount_;
+		if ( top_ != diff )
 		{
 			Assert(!"Squirrel VM stack is not consistent");
 			Error("Squirrel VM stack is not consistent\n");
@@ -2348,89 +2347,36 @@ ScriptStatus_t SquirrelVM::ExecuteFunction(HSCRIPT hFunction, ScriptVariant_t* p
 	return SCRIPT_DONE;
 }
 
-bool SquirrelVM::ScopeIsHooked( HSCRIPT hScope, const char *pszEventName )
+HScriptRaw SquirrelVM::HScriptToRaw( HSCRIPT val )
 {
-	// For now, assume null scope (which is used for global hooks) is always hooked
-	if (!hScope)
-		return true;
+	Assert( val );
+	Assert( val != INVALID_HSCRIPT );
 
-	Assert(hScope != INVALID_HSCRIPT);
-
-	sq_pushroottable(vm_);
-	sq_pushstring(vm_, "Hooks", -1);
-	sq_get(vm_, -2);
-	sq_pushstring(vm_, "ScopeHookedToEvent", -1);
-	sq_get(vm_, -2);
-	sq_push(vm_, -2);
-	sq_pushobject(vm_, *((HSQOBJECT*)hScope));
-	sq_pushstring(vm_, pszEventName, -1);
-	sq_call(vm_, 3, SQTrue, SQTrue);
-
-	SQBool val;
-	if (SQ_FAILED(sq_getbool(vm_, -1, &val)))
-	{
-		sq_pop(vm_, 3);
-		return false;
-	}
-
-	sq_pop(vm_, 3);
-	return val ? true : false;
+	HSQOBJECT *obj = (HSQOBJECT*)val;
+#if 0
+	if ( sq_isweakref(*obj) )
+		return obj->_unVal.pWeakRef->_obj._unVal.raw;
+#endif
+	return obj->_unVal.raw;
 }
 
-HSCRIPT SquirrelVM::LookupHookFunction(const char *pszEventName, HSCRIPT hScope, bool &bLegacy)
-{
-	HSCRIPT hFunc = hScope ? LookupFunction( pszEventName, hScope ) : nullptr;
-	if (hFunc)
-	{
-		bLegacy = true;
-		return hFunc;
-	}
-	else
-	{
-		bLegacy = false;
-	}
-
-	if (!ScopeIsHooked(hScope, pszEventName))
-		return nullptr;
-
-	sq_pushroottable(vm_);
-	sq_pushstring(vm_, "Hooks", -1);
-	sq_get(vm_, -2);
-	sq_pushstring(vm_, "Call", -1);
-	sq_get(vm_, -2);
-
-	HSQOBJECT obj;
-	sq_resetobject(&obj);
-	sq_getstackobj(vm_, -1, &obj);
-	sq_addref(vm_, &obj);
-	sq_pop(vm_, 2);
-
-	HSQOBJECT* pObj = new HSQOBJECT;
-	*pObj = obj;
-	return (HSCRIPT)pObj;
-}
-
-ScriptStatus_t SquirrelVM::ExecuteHookFunction(const char *pszEventName, HSCRIPT hFunction, ScriptVariant_t* pArgs, int nArgs, ScriptVariant_t* pReturn, HSCRIPT hScope, bool bWait)
+ScriptStatus_t SquirrelVM::ExecuteHookFunction(const char *pszEventName, ScriptVariant_t* pArgs, int nArgs, ScriptVariant_t* pReturn, HSCRIPT hScope, bool bWait)
 {
 	SquirrelSafeCheck safeCheck(vm_);
-	if (!hFunction)
-		return SCRIPT_ERROR;
 
-	if (hFunction == INVALID_HSCRIPT)
-		return SCRIPT_ERROR;
-
-	HSQOBJECT* pFunc = (HSQOBJECT*)hFunction;
+	HSQOBJECT* pFunc = (HSQOBJECT*)GetScriptHookManager().GetHookFunction();
 	sq_pushobject(vm_, *pFunc);
 
-	// TODO: Run in hook scope
+	// The call environment of the Hooks::Call function does not matter
+	// as the function does not access any member variables.
 	sq_pushroottable(vm_);
+
+	sq_pushstring(vm_, pszEventName, -1);
 
 	if (hScope)
 		sq_pushobject(vm_, *((HSQOBJECT*)hScope));
 	else
 		sq_pushnull(vm_); // global hook
-
-	sq_pushstring(vm_, pszEventName, -1);
 
 	for (int i = 0; i < nArgs; ++i)
 	{
@@ -2833,7 +2779,6 @@ bool SquirrelVM::GenerateUniqueKey(const char* pszRoot, char* pBuf, int nBufSize
 	static int keyIdx = 0;
 	// This gets used for script scope, still confused why it needs to be inside IScriptVM
 	// is it just to be a compatible name for CreateScope?
-	SquirrelSafeCheck safeCheck(vm_);
 	V_snprintf(pBuf, nBufSize, "%08X_%s", ++keyIdx, pszRoot);
 	return true;
 }
@@ -3025,6 +2970,14 @@ int SquirrelVM::GetKeyValue(HSCRIPT hScope, int nIterator, ScriptVariant_t* pKey
 
 bool SquirrelVM::GetValue(HSCRIPT hScope, const char* pszKey, ScriptVariant_t* pValue)
 {
+#ifdef _DEBUG
+	AssertMsg( pszKey, "FATAL: cannot get NULL" );
+
+	// Don't crash on debug
+	if ( !pszKey )
+		return GetValue( hScope, ScriptVariant_t(0), pValue );
+#endif
+
 	SquirrelSafeCheck safeCheck(vm_);
 
 	Assert(pValue);
@@ -3527,7 +3480,7 @@ void SquirrelVM::WriteObject(CUtlBuffer* pBuffer, WriteStateMap& writeState, SQI
 				}
 				else
 				{
-					Warning("SquirrelVM::WriteObject: Unable to find instanceID for object of type %s, unable to serialize\n",
+					DevWarning("SquirrelVM::WriteObject: Unable to find instanceID for object of type %s, unable to serialize\n",
 						pClassInstanceData->desc->m_pszClassname);
 					pBuffer->PutString("");
 				}

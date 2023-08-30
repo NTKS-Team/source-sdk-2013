@@ -70,7 +70,7 @@ ConVar mapbase_version_client( "mapbase_version_client", MAPBASE_VERSION, FCVAR_
 // This is from the vgui_controls library
 extern vgui::HScheme g_iCustomClientSchemeOverride;
 
-bool g_bUsingCustomHudAnimations = false;
+extern bool g_bUsingCustomHudAnimations;
 bool g_bUsingCustomHudLayout = false;
 #endif
 
@@ -81,6 +81,16 @@ static bool g_bMapbaseCore;
 
 // The game's name found in gameinfo.txt. Mostly used for Discord RPC.
 char g_iszGameName[128];
+
+#ifdef GAME_DLL
+// Default player configuration
+char g_szDefaultPlayerModel[MAX_PATH];
+bool g_bDefaultPlayerDrawExternally;
+
+char g_szDefaultHandsModel[MAX_PATH];
+int g_iDefaultHandsSkin;
+int g_iDefaultHandsBody;
+#endif
 
 enum
 {
@@ -99,6 +109,9 @@ enum
 	MANIFEST_TALKER,
 	//MANIFEST_SENTENCES,
 	MANIFEST_ACTBUSY,
+#endif
+#ifdef MAPBASE_VSCRIPT
+	MANIFEST_VSCRIPT,
 #endif
 
 	// Must always be kept below
@@ -136,6 +149,9 @@ static const ManifestType_t gm_szManifestFileStrings[MANIFEST_NUM_TYPES] = {
 	{ "talker",			"mapbase_load_talker",			"Should we load map-specific talker files? e.g. \"maps/<mapname>_talker.txt\"" },
 	//{ "sentences",	"mapbase_load_sentences",		"Should we load map-specific sentences? e.g. \"maps/<mapname>_sentences.txt\"" },
 	{ "actbusy",		"mapbase_load_actbusy",			"Should we load map-specific actbusy files? e.g. \"maps/<mapname>_actbusy.txt\"" },
+#endif
+#ifdef MAPBASE_VSCRIPT
+	{ "vscript",		"mapbase_load_vscript",			"Should we load map-specific VScript map spawn files? e.g. \"maps/<mapname>_mapspawn.nut\"" },
 #endif
 };
 
@@ -216,6 +232,15 @@ public:
 
 				Q_strncpy(g_iszGameName, pszGameName, sizeof(g_iszGameName));
 			}
+
+#ifdef GAME_DLL
+			Q_strncpy( g_szDefaultPlayerModel, gameinfo->GetString( "player_default_model", "models/player.mdl" ), sizeof( g_szDefaultPlayerModel ) );
+			g_bDefaultPlayerDrawExternally = gameinfo->GetBool( "player_default_draw_externally", false );
+
+			Q_strncpy( g_szDefaultHandsModel, gameinfo->GetString( "player_default_hands", "models/weapons/v_hands.mdl" ), sizeof( g_szDefaultHandsModel ) );
+			g_iDefaultHandsSkin = gameinfo->GetInt( "player_default_hands_skin", 0 );
+			g_iDefaultHandsBody = gameinfo->GetInt( "player_default_hands_body", 0 );
+#endif
 		}
 		gameinfo->deleteThis();
 
@@ -386,7 +411,7 @@ public:
 		KeyValues *pKV = new KeyValues("DefaultManifest");
 		pKV->LoadFromFile(filesystem, GENERIC_MANIFEST_FILE);
 
-		AddManifestFile(pKV/*, true*/);
+		AddManifestFile(pKV, g_MapName/*, true*/);
 
 		pKV->deleteThis();
 	}
@@ -403,7 +428,7 @@ public:
 
 		CGMsg( 1, CON_GROUP_MAPBASE_MISC, "===== Mapbase Manifest: Loading manifest file %s =====\n", file );
 
-		AddManifestFile(pKV, false);
+		AddManifestFile(pKV, g_MapName, false);
 
 		CGMsg( 1, CON_GROUP_MAPBASE_MISC, "==============================================================================\n" );
 
@@ -412,7 +437,7 @@ public:
 
 	void LoadFromValue( const char *value, int type, bool bDontWarn )
 	{
-		if (!filesystem->FileExists(value, "MOD"))
+		if (type != MANIFEST_VSCRIPT && !filesystem->FileExists(value, "MOD"))
 		{
 			if (!bDontWarn)
 			{
@@ -443,11 +468,14 @@ public:
 			//case MANIFEST_SENTENCES: { engine->PrecacheSentenceFile(value); } break;
 			case MANIFEST_ACTBUSY: { ParseCustomActbusyFile(value); } break;
 #endif
+#ifdef MAPBASE_VSCRIPT
+			case MANIFEST_VSCRIPT:		{ VScriptRunScript(value, false); } break;
+#endif
 		}
 	}
 
 	// This doesn't call deleteThis()!
-	void AddManifestFile(KeyValues *pKV, bool bDontWarn = false)
+	void AddManifestFile(KeyValues *pKV, const char *pszMapName, bool bDontWarn = false)
 	{
 		char value[MAX_PATH];
 		const char *name;
@@ -466,7 +494,7 @@ public:
 				{
 					if (FStrEq( outStrings[i], "mapname" ))
 					{
-						Q_strncat( value, g_MapName, sizeof( value ) );
+						Q_strncat( value, pszMapName, sizeof( value ) );
 					}
 					else if (FStrEq( outStrings[i], "language" ))
 					{

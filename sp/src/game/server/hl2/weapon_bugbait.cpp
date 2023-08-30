@@ -100,7 +100,7 @@ acttable_t	CWeaponBugBait::m_acttable[] =
 	{ ACT_HL2MP_GESTURE_RANGE_ATTACK,	ACT_HL2MP_GESTURE_RANGE_ATTACK_GRENADE,    false },
 	{ ACT_HL2MP_GESTURE_RELOAD,			ACT_HL2MP_GESTURE_RELOAD_GRENADE,        false },
 	{ ACT_HL2MP_JUMP,					ACT_HL2MP_JUMP_GRENADE,			false },
-#ifdef EXPANDED_HL2DM_ACTIVITIES
+#if EXPANDED_HL2DM_ACTIVITIES
 	{ ACT_HL2MP_WALK,					ACT_HL2MP_WALK_GRENADE,					false },
 	{ ACT_HL2MP_GESTURE_RANGE_ATTACK2,	ACT_HL2MP_GESTURE_RANGE_ATTACK2_GRENADE,    false },
 #endif
@@ -248,10 +248,6 @@ void CWeaponBugBait::PrimaryAttack( void )
 		return;
 
 	SendWeaponAnim( ACT_VM_HAULBACK );
-
-#ifdef MAPBASE
-	pPlayer->SetAnimation( PLAYER_ATTACK1 );
-#endif
 	
 	m_flTimeWeaponIdle		= FLT_MAX;
 	m_flNextPrimaryAttack	= FLT_MAX;
@@ -319,6 +315,10 @@ void CWeaponBugBait::ThrowGrenade( CBasePlayer *pPlayer )
 	}
 
 	m_bRedraw = true;
+
+#ifdef MAPBASE
+	pPlayer->SetAnimation( PLAYER_ATTACK1 );
+#endif
 }
 
 //-----------------------------------------------------------------------------

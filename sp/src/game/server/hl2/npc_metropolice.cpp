@@ -1539,7 +1539,7 @@ void CNPC_MetroPolice::OnUpdateShotRegulator( )
 	// FIXME: This code (except the burst interval) could be used for all weapon types 
 #ifdef MAPBASE
 	// Only if we actually have the pistol out
-	if ( EntIsClass( GetActiveWeapon(), gm_isz_class_Pistol ) )
+	if ( GetActiveWeapon() && EntIsClass( GetActiveWeapon(), gm_isz_class_Pistol ) )
 #else
 	if( Weapon_OwnsThisType( "weapon_pistol" ) )
 #endif
@@ -3548,7 +3548,11 @@ Activity CNPC_MetroPolice::NPC_TranslateActivity( Activity newActivity )
 	// If we're shoving, see if we should be more forceful in doing so
 	if ( newActivity == ACT_PUSH_PLAYER )
 	{
+#ifdef MAPBASE
+		if ( m_nNumWarnings >= METROPOLICE_MAX_WARNINGS && Weapon_TranslateActivity( ACT_MELEE_ATTACK1, NULL ) == ACT_MELEE_ATTACK_SWING )
+#else
 		if ( m_nNumWarnings >= METROPOLICE_MAX_WARNINGS )
+#endif
 			return ACT_MELEE_ATTACK1;
 	}
 

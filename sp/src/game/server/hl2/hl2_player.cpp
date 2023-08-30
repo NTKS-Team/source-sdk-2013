@@ -331,39 +331,41 @@ public:
 	}
 
 	// Will the command point change?
-	// True = Judged guilty and changed.
-	// False = Judged not guilty and unchanged.
-	bool GetVerdict(Vector *defendant, CHL2_Player *pPlayer)
+	// True = Command point changes
+	// False = Comand point doesn't change
+	bool TestRedirect(Vector *vecNewCommandPoint, CHL2_Player *pPlayer)
 	{
-		// Deliver goal to relevant destinations before sentencing.
-		m_OnCommandGoal.Set(*defendant, pPlayer, this);
+		// Output the goal before doing anything else.
+		m_OnCommandGoal.Set(*vecNewCommandPoint, pPlayer, this);
 
 		if (m_target == NULL_STRING)
 		{
-			// Abort sentencing.
+			// Not targeting anything. Don't redirect and just leave it at the output
 			return false;
 		}
 		else if (FStrEq(STRING(m_target), "-1"))
 		{
-			// Deliver verdict immediately.
-			*defendant = Vector(0, 0, 0);
-			return false;
+			// Completely cancel the squad command.
+			*vecNewCommandPoint = vec3_origin;
+			return true;
 		}
 		else
 		{
-			// Locate entity of interest.
 			// Player is caller.
 			// Player squad representative is activator.
 			CBaseEntity *pEntOfInterest = gEntList.FindEntityGeneric(NULL, STRING(m_target), this, pPlayer->GetSquadCommandRepresentative(), pPlayer);
 			if (pEntOfInterest)
 			{
-				// Deliver their local origin.
-				*defendant = pEntOfInterest->GetLocalOrigin();
+				// Use the entity's absolute origin as the new command point.
+				*vecNewCommandPoint = pEntOfInterest->GetAbsOrigin();
 				return true;
+			}
+			else
+			{
+				Warning("%s couldn't find target entity \"%s\"\n", GetDebugName(), STRING(m_target));
 			}
 		}
 
-		// No sentence.
 		return false;
 	}
 
@@ -1269,6 +1271,10 @@ Class_T  CHL2_Player::Classify ( void )
 		if(IsInAVehicle())
 		{
 			IServerVehicle *pVehicle = GetVehicle();
+#ifdef MAPBASE
+			if (!pVehicle)
+				return CLASS_PLAYER;
+#endif
 			return pVehicle->ClassifyPassenger( this, CLASS_PLAYER );
 		}
 		else
@@ -1383,6 +1389,56 @@ void CHL2_Player::SpawnedAtPoint( CBaseEntity *pSpawnPoint )
 
 //-----------------------------------------------------------------------------
 
+ConVar player_use_anim_enabled( "player_use_anim_enabled", "1" );
+ConVar player_use_anim_heavy_mass( "player_use_anim_heavy_mass", "20.0" );
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+Activity CHL2_Player::Weapon_TranslateActivity( Activity baseAct, bool *pRequired )
+{
+	Activity weaponTranslation = BaseClass::Weapon_TranslateActivity( baseAct, pRequired );
+	
+#if EXPANDED_HL2DM_ACTIVITIES
+	// +USE activities
+	// HACKHACK: Make sure m_hUseEntity is a pickup controller first
+	if ( m_hUseEntity && m_hUseEntity->ClassMatches("player_pickup") && player_use_anim_enabled.GetBool())
+	{
+		CBaseEntity* pHeldEnt = GetPlayerHeldEntity( this );
+		float flMass = pHeldEnt ?
+			(pHeldEnt->VPhysicsGetObject() ? PlayerPickupGetHeldObjectMass( m_hUseEntity, pHeldEnt->VPhysicsGetObject() ) : player_use_anim_heavy_mass.GetFloat()) :
+			(m_hUseEntity->VPhysicsGetObject() ? m_hUseEntity->GetMass() : player_use_anim_heavy_mass.GetFloat());
+		if ( flMass >= player_use_anim_heavy_mass.GetFloat() )
+		{
+			// Heavy versions
+			switch (baseAct)
+			{
+				case ACT_HL2MP_IDLE:			weaponTranslation = ACT_HL2MP_IDLE_USE_HEAVY; break;
+				case ACT_HL2MP_RUN:				weaponTranslation = ACT_HL2MP_RUN_USE_HEAVY; break;
+				case ACT_HL2MP_WALK:			weaponTranslation = ACT_HL2MP_WALK_USE_HEAVY; break;
+				case ACT_HL2MP_IDLE_CROUCH:		weaponTranslation = ACT_HL2MP_IDLE_CROUCH_USE_HEAVY; break;
+				case ACT_HL2MP_WALK_CROUCH:		weaponTranslation = ACT_HL2MP_WALK_CROUCH_USE_HEAVY; break;
+				case ACT_HL2MP_JUMP:			weaponTranslation = ACT_HL2MP_JUMP_USE_HEAVY; break;
+			}
+		}
+		else
+		{
+			switch (baseAct)
+			{
+				case ACT_HL2MP_IDLE:			weaponTranslation = ACT_HL2MP_IDLE_USE; break;
+				case ACT_HL2MP_RUN:				weaponTranslation = ACT_HL2MP_RUN_USE; break;
+				case ACT_HL2MP_WALK:			weaponTranslation = ACT_HL2MP_WALK_USE; break;
+				case ACT_HL2MP_IDLE_CROUCH:		weaponTranslation = ACT_HL2MP_IDLE_CROUCH_USE; break;
+				case ACT_HL2MP_WALK_CROUCH:		weaponTranslation = ACT_HL2MP_WALK_CROUCH_USE; break;
+				case ACT_HL2MP_JUMP:			weaponTranslation = ACT_HL2MP_JUMP_USE; break;
+			}
+		}
+	}
+#endif
+
+	return weaponTranslation;
+}
+
 #ifdef SP_ANIM_STATE
 // Set the activity based on an event or current state
 void CHL2_Player::SetAnimation( PLAYER_ANIM playerAnim )
@@ -1433,6 +1489,9 @@ CStudioHdr *CHL2_Player::OnNewModel()
 
 	return hdr;
 }
+
+extern char g_szDefaultPlayerModel[MAX_PATH];
+extern bool g_bDefaultPlayerDrawExternally;
 #endif
 
 //-----------------------------------------------------------------------------
@@ -1443,7 +1502,12 @@ void CHL2_Player::Spawn(void)
 
 #ifndef HL2MP
 #ifndef PORTAL
+#ifdef MAPBASE
+	if ( GetModelName() == NULL_STRING )
+		SetModel( g_szDefaultPlayerModel );
+#else
 	SetModel( "models/player.mdl" );
+#endif
 #endif
 #endif
 
@@ -1458,6 +1522,8 @@ void CHL2_Player::Spawn(void)
 
 		RemoveEffects( EF_NODRAW );
 	}
+
+	SetDrawPlayerModelExternally( g_bDefaultPlayerDrawExternally );
 #endif
 
 	//
@@ -1775,25 +1841,22 @@ bool CHL2_Player::CommanderFindGoal( commandgoal_t *pGoal )
 			if (!pCommandRedirect || pCommandRedirect->IsDisabled() || !pCommandRedirect->PointIsWithin(tr.endpos))
 				continue;
 
-			// First, GIVE IT OUR ALLIES so it could fire outputs
+			// First, give it our allies so it could fire outputs
 			pCommandRedirect->HandleAllies(m_pPlayerAISquad, this);
 
 			Vector vec = tr.endpos;
-			if (pCommandRedirect->GetVerdict(&vec, this))
+			if (pCommandRedirect->TestRedirect(&vec, this))
 			{
-				// It doesn't want us moving, so just don't find a goal at all
+				// If it returned a 0 vector, cancel the command
 				if (vec.IsZero())
 				{
 					return false;
 				}
 
-				// Just set our goal to this, the mapper didn't sign up for these checks
+				// Just set our goal to this and skip the code below which checks the target position's validity
 				pGoal->m_vecGoalLocation = vec;
 				return true;
 			}
-
-			// Only one should be necessary
-			break;
 		}
 	}
 	//else

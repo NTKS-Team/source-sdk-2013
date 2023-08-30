@@ -259,6 +259,9 @@ LINK_ENTITY_TO_CLASS( client_ragdoll, C_ClientRagdoll );
 BEGIN_DATADESC( C_ClientRagdoll )
 	DEFINE_FIELD( m_bFadeOut, FIELD_BOOLEAN ),
 	DEFINE_FIELD( m_bImportant, FIELD_BOOLEAN ),
+#ifdef MAPBASE
+	DEFINE_FIELD( m_flForcedRetireTime, FIELD_FLOAT ),
+#endif
 	DEFINE_FIELD( m_iCurrentFriction, FIELD_INTEGER ),
 	DEFINE_FIELD( m_iMinFriction, FIELD_INTEGER ),
 	DEFINE_FIELD( m_iMaxFriction, FIELD_INTEGER ),
@@ -294,7 +297,7 @@ END_SCRIPTDESC();
 
 ScriptHook_t	C_BaseAnimating::g_Hook_OnClientRagdoll;
 ScriptHook_t	C_BaseAnimating::g_Hook_FireEvent;
-ScriptHook_t	C_BaseAnimating::g_Hook_BuildTransformations;
+//ScriptHook_t	C_BaseAnimating::g_Hook_BuildTransformations;
 #endif
 
 BEGIN_ENT_SCRIPTDESC( C_BaseAnimating, C_BaseEntity, "Animating models client-side" )
@@ -329,7 +332,7 @@ BEGIN_ENT_SCRIPTDESC( C_BaseAnimating, C_BaseEntity, "Animating models client-si
 
 	DEFINE_SCRIPTFUNC( GetSequence, "Gets the current sequence" )
 	DEFINE_SCRIPTFUNC( SetSequence, "Sets the current sequence" )
-	DEFINE_SCRIPTFUNC( SequenceLoops, "Loops the current sequence" )
+	DEFINE_SCRIPTFUNC( SequenceLoops, "Does the current sequence loop?" )
 	DEFINE_SCRIPTFUNC( LookupSequence, "Gets the index of the specified sequence name" )
 	DEFINE_SCRIPTFUNC( LookupActivity, "Gets the ID of the specified activity name" )
 	DEFINE_SCRIPTFUNC( GetSequenceName, "Gets the name of the specified sequence index" )
@@ -364,8 +367,8 @@ BEGIN_ENT_SCRIPTDESC( C_BaseAnimating, C_BaseEntity, "Animating models client-si
 		DEFINE_SCRIPTHOOK_PARAM( "options", FIELD_CSTRING )
 	END_SCRIPTHOOK()
 
-	BEGIN_SCRIPTHOOK( C_BaseAnimating::g_Hook_BuildTransformations, "BuildTransformations", FIELD_VOID, "Called when building bone transformations. Allows VScript to read/write any bone with Get/SetBoneTransform." )
-	END_SCRIPTHOOK()
+	//BEGIN_SCRIPTHOOK( C_BaseAnimating::g_Hook_BuildTransformations, "BuildTransformations", FIELD_VOID, "Called when building bone transformations. Allows VScript to read/write any bone with Get/SetBoneTransform." )
+	//END_SCRIPTHOOK()
 #endif
 END_SCRIPTDESC();
 
@@ -377,6 +380,9 @@ C_ClientRagdoll::C_ClientRagdoll( bool bRestoring )
 	m_bFadeOut = false;
 	m_bFadingOut = false;
 	m_bImportant = false;
+#ifdef MAPBASE
+	m_flForcedRetireTime = 0.0f;
+#endif
 	m_bNoModelParticles = false;
 
 	SetClassname("client_ragdoll");
@@ -457,7 +463,11 @@ void C_ClientRagdoll::OnRestore( void )
 	
 	if ( m_bFadeOut == true )
 	{
+#ifdef MAPBASE
+		s_RagdollLRU.MoveToTopOfLRU( this, m_bImportant, m_flForcedRetireTime );
+#else
 		s_RagdollLRU.MoveToTopOfLRU( this, m_bImportant );
+#endif
 	}
 
 	NoteRagdollCreationTick( this );
@@ -1769,21 +1779,21 @@ void C_BaseAnimating::BuildTransformations( CStudioHdr *hdr, Vector *pos, Quater
 	}
 	
 #ifdef MAPBASE_VSCRIPT
-	if (m_ScriptScope.IsInitialized() && g_Hook_BuildTransformations.CanRunInScope(m_ScriptScope))
-	{
-		int oldWritableBones = m_BoneAccessor.GetWritableBones();
-		int oldReadableBones = m_BoneAccessor.GetReadableBones();
-		m_BoneAccessor.SetWritableBones( BONE_USED_BY_ANYTHING );
-		m_BoneAccessor.SetReadableBones( BONE_USED_BY_ANYTHING );
-
-		// No parameters
-		//ScriptVariant_t args[] = {};
-		//ScriptVariant_t returnValue;
-		g_Hook_BuildTransformations.Call( m_ScriptScope, NULL, NULL /*&returnValue, args*/ );
-
-		m_BoneAccessor.SetWritableBones( oldWritableBones );
-		m_BoneAccessor.SetReadableBones( oldReadableBones );
-	}
+	//if (m_ScriptScope.IsInitialized() && g_Hook_BuildTransformations.CanRunInScope(m_ScriptScope))
+	//{
+	//	int oldWritableBones = m_BoneAccessor.GetWritableBones();
+	//	int oldReadableBones = m_BoneAccessor.GetReadableBones();
+	//	m_BoneAccessor.SetWritableBones( BONE_USED_BY_ANYTHING );
+	//	m_BoneAccessor.SetReadableBones( BONE_USED_BY_ANYTHING );
+	//
+	//	// No parameters
+	//	//ScriptVariant_t args[] = {};
+	//	//ScriptVariant_t returnValue;
+	//	g_Hook_BuildTransformations.Call( m_ScriptScope, NULL, NULL /*&returnValue, args*/ );
+	//
+	//	m_BoneAccessor.SetWritableBones( oldWritableBones );
+	//	m_BoneAccessor.SetReadableBones( oldReadableBones );
+	//}
 #endif
 }
 
