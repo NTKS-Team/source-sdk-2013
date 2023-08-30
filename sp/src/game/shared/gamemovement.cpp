@@ -2484,6 +2484,7 @@ static ConVar sv_walljump_strength_reduction_factor( "sv_walljump_strength_reduc
 static ConVar sv_walljump_fall_compensation_reduction_factor( "sv_walljump_fall_compensation_reduction_factor", "0.9", FCVAR_REPLICATED, "factor to make each consecutive walljump fall compensation less powerful" );
 static ConVar sv_walljump_physobj_mass_factor( "sv_walljump_physobj_mass_factor", "1.5", FCVAR_REPLICATED, "factor applied to physics object mass when calculating walljump strength" );
 static ConVar sv_walljump_physobj_push_factor( "sv_walljump_physobj_push_factor", "75", FCVAR_REPLICATED, "factor applied to physics object push" );
+static ConVar sv_walljump_disable_on_ladder( "sv_walljump_disable_on_ladder", "0", FCVAR_REPLICATED, "enable or disable walljumping off ladders" );
 #endif
 
 static Vector ToBBoxEdge2D( Vector origin, const Vector &mins, const Vector &maxs, const Vector &direction )
@@ -2624,6 +2625,11 @@ bool CGameMovement::CheckJumpButton( void )
 
 		// wait some time after jumping before executing consecutive walljumps
 		if ( player->m_Local.m_iWallsJumped && player->m_Local.m_flJumpTime > GAMEMOVEMENT_JUMP_TIME * ( 1.0f - sv_walljump_time_delay_factor.GetFloat() ) )
+		{
+			return false;
+		}
+
+		if ( sv_walljump_disable_on_ladder.GetBool() && player->GetMoveType() == MOVETYPE_LADDER )
 		{
 			return false;
 		}
