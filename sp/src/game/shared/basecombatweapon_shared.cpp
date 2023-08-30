@@ -287,6 +287,17 @@ void CBaseCombatWeapon::Precache( void )
 		// Precache models (preload to avoid hitch)
 		m_iViewModelIndex = 0;
 		m_iWorldModelIndex = 0;
+#ifdef MOD_NTKS
+		// m_iViewModelIndex seems unused
+		for ( size_t i = 0; i < PC_MAX; ++i )
+		{
+			const char *model = GetViewModelForCharacter( (PlayerCharacter)i );
+			if ( model && model[0] )
+			{
+				CBaseEntity::PrecacheModel( model );
+			}
+		}
+#endif
 		if ( GetViewModel() && GetViewModel()[0] )
 		{
 			m_iViewModelIndex = CBaseEntity::PrecacheModel( GetViewModel() );
@@ -397,8 +408,23 @@ const FileWeaponInfo_t &CBaseCombatWeapon::GetWpnData( void ) const
 //-----------------------------------------------------------------------------
 const char *CBaseCombatWeapon::GetViewModel( int /*viewmodelindex = 0 -- this is ignored in the base class here*/ ) const
 {
+#ifdef MOD_NTKS
+	return GetViewModelForCharacter( GetPlayerCharacter( GetOwnerEntity() ) );
+#else
+	return GetWpnData().szViewModel;
+#endif
+}
+
+#ifdef MOD_NTKS
+const char *CBaseCombatWeapon::GetViewModelForCharacter( PlayerCharacter character ) const
+{
+	if ( character != PC_INVALID && GetWpnData().characterInfo[character].m_szViewModel[0] )
+	{
+		return GetWpnData().characterInfo[character].m_szViewModel;
+	}
 	return GetWpnData().szViewModel;
 }
+#endif
 
 //-----------------------------------------------------------------------------
 // Purpose: 

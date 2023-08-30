@@ -58,6 +58,13 @@ public:
 	CNetworkVar( float, m_flDuckJumpTime );
 	// Jump time, time to auto unduck (since we auto crouch jump now).
 	CNetworkVar( float, m_flJumpTime );
+#ifdef MOD_NTKS
+	CNetworkVar( int, m_iWallsJumped );
+	CNetworkVar( float, m_flCrouchSlideTime );
+	// used for crouch-slide
+	CNetworkVector( m_vecGroundPlaneNormal );
+	CNetworkVar( float, m_flStartStopSprintTime );
+#endif
 	// Step sound side flip/flip
 	int m_nStepside;;
 	// Velocity at time when we hit ground

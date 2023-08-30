@@ -12,6 +12,9 @@
 #endif
 
 #include "shareddefs.h"
+#ifdef MOD_NTKS
+#include "baseplayer_shared.h"
+#endif
 
 class IFileSystem;
 
@@ -67,6 +70,28 @@ class KeyValues;
 class FileWeaponInfo_t
 {
 public:
+#ifdef MOD_NTKS
+	// character specific overrides
+	struct CharacterInfo
+	{
+	public:
+		CharacterInfo();
+
+		void Parse( KeyValues *pKeyValuesData );
+
+		char m_szViewModel[MAX_WEAPON_STRING];
+		Vector m_vecAttackSpread;
+		float m_flViewmodelRecenterSpeed;
+		float m_flViewmodelRecenterSpeedADS;
+		float m_flViewmodelLag;
+		float m_flViewmodelLagADS;
+		float m_flViewmodelLagMax;
+		float m_flViewmodelLagMaxADS;
+		Vector m_vecViewmodelPitchAdjust;
+	};
+
+	CharacterInfo characterInfo[PC_MAX];
+#endif
 
 	FileWeaponInfo_t();
 	

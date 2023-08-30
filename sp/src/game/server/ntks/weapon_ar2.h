@@ -25,7 +25,6 @@ public:
 
 	DECLARE_SERVERCLASS();
 
-	void	ItemPostFrame( void );
 	void	SecondaryAttack( void );
 	void	DisableIronsights( void );
 	bool	Holster( CBaseCombatWeapon *pSwitchingTo );
@@ -55,7 +54,6 @@ public:
 
 protected:
 
-	int						m_nVentPose;
 	CNetworkVar( bool, m_bIsIronsighting );
 	CNetworkVar( float, m_flIronsightTime );
 

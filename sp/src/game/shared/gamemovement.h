@@ -102,13 +102,17 @@ protected:
 
 	void			WaterJump( void );
 
+#ifdef MOD_NTKS
+	bool			IsCrouchSliding( void ) const;
+#endif
+
 	// Handles both ground friction and water friction
 	void			Friction( void );
 
 	virtual void	AirAccelerate( Vector& wishdir, float wishspeed, float accel );
 
 	virtual void	AirMove( void );
-	virtual float	GetAirSpeedCap( void ) { return 30.f; }
+	virtual float	GetAirSpeedCap( void );
 	
 	virtual bool	CanAccelerate();
 	virtual void	Accelerate( Vector& wishdir, float wishspeed, float accel);
@@ -156,6 +160,11 @@ protected:
 
 	// Handle movement in noclip mode.
 	void			FullNoClipMove( float factor, float maxacceleration );
+
+#ifdef MOD_NTKS
+	float			SpedSinceFactor( float dt ) const;
+	void			CheckSpeedButton( void );
+#endif
 
 	// Returns true if he started a jump (ie: should he play the jump animation)?
 	virtual bool	CheckJumpButton( void );	// Overridden by each game.
@@ -284,6 +293,10 @@ protected:
 	int				m_iSpeedCropped;
 
 	float			m_flStuckCheckTime[MAX_PLAYERS+1][2]; // Last time we did a full test
+
+#ifdef MOD_NTKS
+	Vector			m_vecDirectionBeforeCollision;
+#endif
 
 	// special function for teleport-with-duck for episodic
 #ifdef HL2_EPISODIC

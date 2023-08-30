@@ -629,6 +629,10 @@ CGameMovement::CGameMovement( void )
 	mv					= NULL;
 
 	memset( m_flStuckCheckTime, 0, sizeof(m_flStuckCheckTime) );
+
+#ifdef MOD_NTKS
+	m_vecDirectionBeforeCollision = vec3_origin;
+#endif
 }
 
 //-----------------------------------------------------------------------------
@@ -937,6 +941,10 @@ void CGameMovement::CategorizeGroundSurface( trace_t &pm )
 		player->m_surfaceFriction = 1.0f;
 
 	player->m_chTextureType = player->m_pSurfaceData->game.material;
+
+#ifdef MOD_NTKS
+	player->m_Local.m_vecGroundPlaneNormal = pm.plane.normal;
+#endif
 }
 
 bool CGameMovement::IsDead( void ) const
@@ -1610,6 +1618,70 @@ void CGameMovement::StepMove( Vector &vecDestination, trace_t &trace )
 	}
 }
 
+#ifdef MOD_NTKS
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+bool CGameMovement::IsCrouchSliding( void ) const
+{
+	if ( player->m_Local.m_flCrouchSlideTime >= gpGlobals->curtime )
+	{
+		Assert( player->m_Local.m_bDucking || player->m_Local.m_bDucked );
+		return true;
+	}
+	return false;
+}
+
+static ConVar sv_crouch_slide_time( "sv_crouch_slide_time", "0.5", FCVAR_REPLICATED | FCVAR_CHEAT );
+static ConVar sv_crouch_slide_speed_threshold( "sv_crouch_slide_speed_threshold", "290", FCVAR_REPLICATED | FCVAR_CHEAT );
+static ConVar sv_crouch_slide_speed_threshold_sprint_factor( "sv_crouch_slide_speed_threshold_sprint_factor", "0.75", FCVAR_REPLICATED | FCVAR_CHEAT );
+static ConVar sv_crouch_slide_speed_threshold_sprint_factor_time( "sv_crouch_slide_speed_threshold_sprint_factor_time", "0.5", FCVAR_REPLICATED | FCVAR_CHEAT );
+static ConVar sv_crouch_slide_speed_cancel( "sv_crouch_slide_speed_cancel", "150", FCVAR_REPLICATED | FCVAR_CHEAT );
+static ConVar sv_crouch_slide_friction_mult( "sv_crouch_slide_friction_mult", "0.1", FCVAR_REPLICATED | FCVAR_CHEAT );
+#define GAMEMOVEMENT_CROUCH_SLIDE_TIME (sv_crouch_slide_time.GetFloat() + GAMEMOVEMENT_DUCK_TIME / 1000.0f)
+#define CROUCH_SLIDE_THRESHOLD_FACTOR (sv_crouch_slide_speed_threshold_sprint_factor.GetFloat() + Clamp( SpedSinceFactor( sv_crouch_slide_speed_threshold_sprint_factor_time.GetFloat() ), 0.0f, 1.0f ) * ( 1.0f - sv_crouch_slide_speed_threshold_sprint_factor.GetFloat() ))
+
+static bool CrouchSlideSpeedReached( Vector move, const Vector &surfaceNormal, float thresholdFactor )
+{
+	float speed = VectorNormalize( move );
+
+	// zero out z and renormalize
+	float zsqr = move.z * move.z;
+	move.z = 0.0f;
+	move /= sqrtf( 1.0f - zsqr );
+
+	float steepness = DotProduct( move, surfaceNormal );
+	if ( steepness < -0.45f ) return false;
+	float slopeMod = ( Bias( steepness + 0.45f, 0.7f ) + 0.2f ) * 1.2f;
+	return speed * Min( slopeMod, 1.25f ) > sv_crouch_slide_speed_threshold.GetFloat() * thresholdFactor;
+}
+
+static bool CrouchSlideSpeedReached( CBasePlayer *player, float thresholdFactor )
+{
+	if ( !player->GetGroundEntity() )
+	{
+		Assert( player->m_Local.m_vecGroundPlaneNormal == vec3_origin );
+		return false;
+	}
+	
+	Assert( player->m_Local.m_vecGroundPlaneNormal != vec3_origin );
+	
+/*
+	trace_t tr;
+	//FIXME: is there a better trace we can do to get the plane normal of the ground-entity?
+	Ray_t ray;
+	ray.Init( player->GetAbsOrigin(), player->GetGroundEntity()->GetAbsOrigin(), VEC_HULL_MIN_SCALED( player ), VEC_HULL_MAX_SCALED( player ) );
+	UTIL_TraceRay( ray, MASK_PLAYERSOLID, player, COLLISION_GROUP_PLAYER_MOVEMENT, &tr );
+	if ( !tr.DidHit() )
+	{
+		Warning( "Unable to find ground plane.\n" );
+		return false;
+	}
+*/
+	return CrouchSlideSpeedReached( player->GetAbsVelocity(), player->m_Local.m_vecGroundPlaneNormal, thresholdFactor );
+}
+#endif
+
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
@@ -1662,6 +1734,13 @@ void CGameMovement::Friction( void )
 			control = (speed < sv_stopspeed.GetFloat()) ? sv_stopspeed.GetFloat() : speed;
 		}
 
+#ifdef MOD_NTKS
+		if ( IsCrouchSliding() )
+		{
+			friction *= sv_crouch_slide_friction_mult.GetFloat();
+		}
+#endif
+
 		// Add the amount to the drop amount.
 		drop += control*friction*gpGlobals->frametime;
 	}
@@ -1703,6 +1782,29 @@ void CGameMovement::FinishGravity( void )
 	CheckVelocity();
 }
 
+#ifdef MOD_NTKS
+static ConVar sv_walljump_movement_time_delay_factor( "sv_walljump_movement_time_delay_factor", "0.75", FCVAR_REPLICATED, "factor in [1..] which delays air movement after walljump" );
+static ConVar sv_airspeed( "sv_airspeed", "80.0", FCVAR_REPLICATED );
+#endif
+
+//-----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
+float CGameMovement::GetAirSpeedCap( void )
+{
+#ifdef MOD_NTKS
+#if 0
+	// reduce the airspeed when we just walljumped, which pushes the player away from the surface,
+	// usually opposite of where the player was moving
+	if ( player->m_Local.m_iWallsJumped && player->m_Local.m_flJumpTime > GAMEMOVEMENT_JUMP_TIME * sv_walljump_movement_time_delay_factor.GetFloat() )
+	{
+		return sv_airspeed.GetFloat() * ( ( ( player->m_Local.m_flJumpTime * sv_walljump_movement_time_delay_factor.GetFloat() ) / GAMEMOVEMENT_JUMP_TIME ) );
+	}
+#endif
+	return sv_airspeed.GetFloat();
+#endif
+	return 30.f;
+}
+
 //-----------------------------------------------------------------------------
 // Purpose: 
 // Input  : wishdir - 
@@ -1713,6 +1815,15 @@ void CGameMovement::AirAccelerate( Vector& wishdir, float wishspeed, float accel
 	int i;
 	float addspeed, accelspeed, currentspeed;
 	float wishspd;
+
+#ifdef MOD_NTKS
+	// reduce the airspeed when we just walljumped, which pushes the player away from the surface,
+	// usually opposite of where the player was moving
+	if ( player->m_Local.m_iWallsJumped && player->m_Local.m_flJumpTime > GAMEMOVEMENT_JUMP_TIME * sv_walljump_movement_time_delay_factor.GetFloat() )
+	{
+		accel *= ( ( player->m_Local.m_flJumpTime * sv_walljump_movement_time_delay_factor.GetFloat() ) / GAMEMOVEMENT_JUMP_TIME );
+	}
+#endif
 
 	wishspd = wishspeed;
 	
@@ -2033,6 +2144,10 @@ void CGameMovement::FullWalkMove( )
 		StartGravity();
 	}
 
+#ifdef MOD_NTKS
+	CheckSpeedButton();
+#endif
+
 	// If we are leaping out of the water, just update the counters.
 	if (player->m_flWaterJumpTime)
 	{
@@ -2351,6 +2466,69 @@ void CGameMovement::PlaySwimSound()
 	MoveHelper()->StartSound( mv->GetAbsOrigin(), "Player.Swim" );
 }
 
+#ifdef MOD_NTKS
+static ConVar sv_walljump_strength_up_factor( "sv_walljump_strength_up_factor", "1.25", FCVAR_REPLICATED, "upwards jump strength modifier" );
+static ConVar sv_walljump_strength_normal( "sv_walljump_strength_normal", "250.0", FCVAR_REPLICATED, "lateral jump strength modifier (based on surface normal) " );
+static ConVar sv_walljump_strength_normal_z_factor( "sv_walljump_strength_normal_z_factor", "0.2", FCVAR_REPLICATED, "surface normal Z dampening" );
+static ConVar sv_walljump_detect_use_bbox( "sv_walljump_detect_use_bbox", "1", FCVAR_REPLICATED, "whether detection happens via box- or line-check" );
+static ConVar sv_walljump_detect_bbox_scale( "sv_walljump_detect_bbox_scale", "0.7", FCVAR_REPLICATED, "scale bounding box of player by this factor for wall detecton" );
+static ConVar sv_walljump_detect_bbox_height( "sv_walljump_detect_bbox_height", "20", FCVAR_REPLICATED, "height of bounding box for wall detecton" );
+static ConVar sv_walljump_detect_move_distance( "sv_walljump_detect_move_distance", "16.0", FCVAR_REPLICATED, "maximum distance from surface to allow walljump detection by movement" );
+static ConVar sv_walljump_detect_previous_momentum_distance( "sv_walljump_detect_previous_momentum_distance", "15.0", FCVAR_REPLICATED, "maximum distance from surface to allow walljump detection by previous momentum" );
+static ConVar sv_walljump_detect_current_momentum_distance( "sv_walljump_detect_current_momentum_distance", "15.0", FCVAR_REPLICATED, "maximum distance from surface to allow walljump detection by current momentum" );
+static ConVar sv_walljump_forward_boost_percent( "sv_walljump_forward_boost_percent", "0.75", FCVAR_REPLICATED, "forwards boost modifier" );
+static ConVar sv_walljump_fall_compensation( "sv_walljump_fall_compensation", "220.0", FCVAR_REPLICATED, "nullifies up to that much fall speed" );
+static ConVar sv_walljump_time_delay_factor( "sv_walljump_time_delay_factor", "0.18", FCVAR_REPLICATED, "factor in [0..1] which delays how early consecutive walljumps are possible" );
+static ConVar sv_walljump_limit( "sv_walljump_limit", "3", FCVAR_REPLICATED, "number of times a walljump can be performed before touching ground again" );
+static ConVar sv_walljump_strength_reduction_factor( "sv_walljump_strength_reduction_factor", "0.8", FCVAR_REPLICATED, "factor to make each consecutive walljump less powerful" );
+static ConVar sv_walljump_fall_compensation_reduction_factor( "sv_walljump_fall_compensation_reduction_factor", "0.9", FCVAR_REPLICATED, "factor to make each consecutive walljump fall compensation less powerful" );
+static ConVar sv_walljump_physobj_mass_factor( "sv_walljump_physobj_mass_factor", "1.5", FCVAR_REPLICATED, "factor applied to physics object mass when calculating walljump strength" );
+static ConVar sv_walljump_physobj_push_factor( "sv_walljump_physobj_push_factor", "75", FCVAR_REPLICATED, "factor applied to physics object push" );
+#endif
+
+static Vector ToBBoxEdge2D( Vector origin, const Vector &mins, const Vector &maxs, const Vector &direction )
+{
+	// get edge of BBox
+	if ( direction.x < 0 )
+	{
+		origin.x += mins.x;
+	}
+	else if ( direction.x > 0 )
+	{
+		origin.x += maxs.x;
+	}
+
+	if ( direction.y < 0 )
+	{
+		origin.y += mins.y;
+	}
+	else if ( direction.y > 0 )
+	{
+		origin.y += maxs.y;
+	}
+
+	return origin;
+}
+
+#ifdef MOD_NTKS
+float CGameMovement::SpedSinceFactor( float dt ) const
+{
+	if ( mv->m_nButtons & IN_SPEED )
+	{
+		return ( player->m_Local.m_flStartStopSprintTime + dt - gpGlobals->curtime ) / dt;
+	} else {
+		return ( gpGlobals->curtime - player->m_Local.m_flStartStopSprintTime ) / dt;
+	}
+}
+
+void CGameMovement::CheckSpeedButton( void )
+{
+	if ( ( mv->m_nOldButtons ^ mv->m_nButtons ) & IN_SPEED )
+	{
+		player->m_Local.m_flStartStopSprintTime = gpGlobals->curtime;
+	}
+}
+#endif
 
 //-----------------------------------------------------------------------------
 // Purpose: 
@@ -2395,12 +2573,15 @@ bool CGameMovement::CheckJumpButton( void )
 		return false;
 	}
 
+	// check moved below
+#ifndef MOD_NTKS
 	// No more effect
  	if (player->GetGroundEntity() == NULL)
 	{
 		mv->m_nOldButtons |= IN_JUMP;
 		return false;		// in air, so no effect
 	}
+#endif
 
 	// Don't allow jumping when the player is in a stasis field.
 #ifndef HL2_EPISODIC
@@ -2418,6 +2599,199 @@ bool CGameMovement::CheckJumpButton( void )
 	// Still updating the eye position.
 	if ( player->m_Local.m_flDuckJumpTime > 0.0f )
 		return false;
+
+#ifdef MOD_NTKS
+	if ( player->GetGroundEntity() == NULL )
+	{
+		// check if there is some room to jump
+		bool hasHeadroom;
+		{
+			Vector playerMins = GetPlayerMins( true );
+			Vector playerMaxs = GetPlayerMaxs( true );
+			Vector hullSizeNormal = GetPlayerMaxs( false ) - GetPlayerMins( false );
+			Vector hullSizeCrouch = playerMaxs - playerMins;
+			Ray_t ray;
+			trace_t tr;
+			ray.Init( mv->GetAbsOrigin(), mv->GetAbsOrigin() - ( hullSizeNormal - hullSizeCrouch ), playerMins, playerMaxs );
+			UTIL_TraceRay( ray, PlayerSolidMask(), mv->m_nPlayerHandle.Get(), COLLISION_GROUP_PLAYER_MOVEMENT, &tr );
+			hasHeadroom = !tr.DidHit();
+		}
+		if ( !hasHeadroom || player->m_Local.m_iWallsJumped >= sv_walljump_limit.GetInt() )
+		{
+			mv->m_nOldButtons |= IN_JUMP;
+			return false;		// in air, so no effect
+		}
+
+		// wait some time after jumping before executing consecutive walljumps
+		if ( player->m_Local.m_iWallsJumped && player->m_Local.m_flJumpTime > GAMEMOVEMENT_JUMP_TIME * ( 1.0f - sv_walljump_time_delay_factor.GetFloat() ) )
+		{
+			return false;
+		}
+
+		Vector vecMoveDirection;
+		VectorMultiply( m_vecForward, mv->m_flForwardMove, vecMoveDirection );
+		VectorMA( vecMoveDirection, mv->m_flSideMove, m_vecRight, vecMoveDirection );
+		VectorMA( vecMoveDirection, mv->m_flUpMove, m_vecUp, vecMoveDirection );
+		vecMoveDirection.NormalizeInPlace();
+		vecMoveDirection *= sv_walljump_detect_move_distance.GetFloat();
+
+		Vector playerMins = GetPlayerMins( true ) * sv_walljump_detect_bbox_scale.GetFloat();
+		Vector playerMaxs = GetPlayerMaxs( true ) * sv_walljump_detect_bbox_scale.GetFloat();
+		playerMaxs.z = sv_walljump_detect_bbox_height.GetFloat() + playerMins.z;
+
+		trace_t tr;
+		if ( sv_walljump_detect_use_bbox.GetBool() )
+		{
+			Ray_t ray;
+			ray.Init( mv->GetAbsOrigin(), mv->GetAbsOrigin() + vecMoveDirection, playerMins, playerMaxs );
+			UTIL_TraceRay( ray, PlayerSolidMask(), mv->m_nPlayerHandle.Get(), COLLISION_GROUP_PLAYER_MOVEMENT, &tr );
+		}
+		else
+		{
+			Vector traceOrigin = ToBBoxEdge2D( mv->GetAbsOrigin(), playerMins, playerMaxs, vecMoveDirection );
+			traceOrigin.z += playerMins.z;
+			UTIL_TraceLine( traceOrigin, traceOrigin + vecMoveDirection, PlayerSolidMask(), mv->m_nPlayerHandle.Get(), COLLISION_GROUP_PLAYER_MOVEMENT, &tr );
+		}
+
+		if ( tr.startsolid )
+		{
+			Warning( "move walljump-check starts in solid\n" );
+		}
+
+		// no hit
+		if ( tr.startsolid || tr.fraction == 1.0f )
+		{
+			vecMoveDirection = m_vecDirectionBeforeCollision;
+			vecMoveDirection *= sv_walljump_detect_previous_momentum_distance.GetFloat();
+			if ( sv_walljump_detect_use_bbox.GetBool() )
+			{
+				Ray_t ray;
+				ray.Init( mv->GetAbsOrigin(), mv->GetAbsOrigin() + vecMoveDirection, playerMins, playerMaxs );
+				UTIL_TraceRay( ray, PlayerSolidMask(), mv->m_nPlayerHandle.Get(), COLLISION_GROUP_PLAYER_MOVEMENT, &tr );
+			}
+			else
+			{
+				Vector traceOrigin = ToBBoxEdge2D( mv->GetAbsOrigin(), playerMins, playerMaxs, vecMoveDirection );
+				traceOrigin.z += playerMins.z;
+				UTIL_TraceLine( traceOrigin, traceOrigin + vecMoveDirection, PlayerSolidMask(), mv->m_nPlayerHandle.Get(), COLLISION_GROUP_PLAYER_MOVEMENT, &tr );
+			}
+
+			if ( tr.startsolid )
+			{
+				Warning( "previous momentum walljump-check starts in solid\n" );
+			}
+
+			// no hit
+			if ( tr.startsolid || tr.fraction == 1.0f )
+			{
+				vecMoveDirection = mv->m_vecVelocity.Normalized();
+				vecMoveDirection *= sv_walljump_detect_current_momentum_distance.GetFloat();
+				if ( sv_walljump_detect_use_bbox.GetBool() )
+				{
+					Ray_t ray;
+					ray.Init( mv->GetAbsOrigin(), mv->GetAbsOrigin() + vecMoveDirection, playerMins, playerMaxs );
+					UTIL_TraceRay( ray, PlayerSolidMask(), mv->m_nPlayerHandle.Get(), COLLISION_GROUP_PLAYER_MOVEMENT, &tr );
+				}
+				else
+				{
+					Vector traceOrigin = ToBBoxEdge2D( mv->GetAbsOrigin(), playerMins, playerMaxs, vecMoveDirection );
+					traceOrigin.z += playerMins.z;
+					UTIL_TraceLine( traceOrigin, traceOrigin + vecMoveDirection, PlayerSolidMask(), mv->m_nPlayerHandle.Get(), COLLISION_GROUP_PLAYER_MOVEMENT, &tr );
+				}
+
+				if ( tr.startsolid )
+				{
+					Warning( "current momentum walljump-check starts in solid\n" );
+				}
+
+				// no hit
+				if ( tr.startsolid || tr.fraction == 1.0f )
+				{
+					return false;
+				}
+			}
+		}
+
+		// not walljumpable or too flat
+		if ( ( tr.contents & CONTENTS_NO_WALLJUMP ) || fabs( tr.plane.normal.z ) > 0.4f )
+		{
+			return false;
+		}
+
+		++player->m_Local.m_iWallsJumped;
+		CategorizeGroundSurface( tr );
+
+		// we already give an upwards boost, so dampen the normal a bit
+		tr.plane.normal.z *= sv_walljump_strength_normal_z_factor.GetFloat();
+		tr.plane.normal.NormalizeInPlace();
+
+		Vector vecWalljump = tr.plane.normal * sv_walljump_strength_normal.GetFloat() * physprops->GetSurfaceData( tr.surface.surfaceProps )->game.jumpFactor;
+		float fallCompensation = sv_walljump_fall_compensation.GetFloat();
+		for ( int i = player->m_Local.m_iWallsJumped; i != 0; --i ) {
+			vecWalljump *= sv_walljump_strength_reduction_factor.GetFloat();
+			fallCompensation *= sv_walljump_fall_compensation_reduction_factor.GetFloat();
+		}
+
+		bool hitPhysProp = false;
+
+		if ( tr.m_pEnt )
+		{
+			if ( tr.m_pEnt->VPhysicsGetObject() )
+			{
+				hitPhysProp = true;
+				float mass = tr.m_pEnt->VPhysicsGetObject()->GetMass() * sv_walljump_physobj_mass_factor.GetFloat();
+				if ( vecWalljump.LengthSqr() > mass * mass )
+				{
+					float prevStrength = vecWalljump.NormalizeInPlace();
+					vecWalljump *= mass;
+					// scale fallCompensation proportionally
+					fallCompensation *= mass / prevStrength;
+				}
+			}
+
+#ifdef GAME_DLL
+			CTakeDamageInfo info( player, player, -vecWalljump * sv_walljump_physobj_push_factor.GetFloat(), mv->GetAbsOrigin(), 1, DMG_CLUB );
+			tr.m_pEnt->TakeDamage( info );
+#endif
+		}
+
+		// let's stop some falling velocity
+		if ( mv->m_vecVelocity.z < 0.0f )
+		{
+			mv->m_vecVelocity.z += fallCompensation;
+			if ( mv->m_vecVelocity.z > 0.0f )
+			{
+				mv->m_vecVelocity.z = 0.0f;
+			}
+		}
+		// add walljump z - the 2D portion is applied differently
+		mv->m_vecVelocity.z += vecWalljump.z;
+
+		if ( !hitPhysProp && mv->m_vecVelocity.AsVector2D().Dot(tr.plane.normal.AsVector2D()) < 0.0f )
+		{
+			// to zero out any velocity coming "into" the wall we project the current velocity onto the wall area
+			// swap the 2D normal elements to create that "wall area vector"
+			Vector2D plane = tr.plane.normal.AsVector2D();
+			V_swap( plane.x, plane.y );
+			plane.NormalizeInPlace();
+
+			// project
+			vec_t magnitude = mv->m_vecVelocity.AsVector2D().Dot(plane);
+			Vector2DMA( vecWalljump.AsVector2D(), magnitude, plane, mv->m_vecVelocity.AsVector2D() );
+		}
+		else
+		{
+			// add 2D walljump
+			mv->m_vecVelocity.AsVector2D() += vecWalljump.AsVector2D();
+		}
+
+		m_vecDirectionBeforeCollision = vec3_origin;
+	}
+
+	// cancel crouch slide
+	player->m_Local.m_flCrouchSlideTime = 0.0f;
+	player->PlayCrouchSlideSound( NULL );
+#endif
 
 
 	// In the air now.
@@ -2450,6 +2824,16 @@ bool CGameMovement::CheckJumpButton( void )
 		flMul = sqrt(2 * GetCurrentGravity() * GAMEMOVEMENT_JUMP_HEIGHT);
 	}
 
+#ifdef MOD_NTKS
+	if ( player->m_Local.m_iWallsJumped )
+	{
+		flMul *= sv_walljump_strength_up_factor.GetFloat();
+		for ( int i = player->m_Local.m_iWallsJumped; i != 0; --i ) {
+			flMul *= sv_walljump_strength_reduction_factor.GetFloat();
+		}
+	}
+#endif
+
 	// Acclerate upward
 	// If we are ducking...
 	float startz = mv->m_vecVelocity[2];
@@ -2481,6 +2865,15 @@ bool CGameMovement::CheckJumpButton( void )
 		// We give a certain percentage of the current forward movement as a bonus to the jump speed.  That bonus is clipped
 		// to not accumulate over time.
 		float flSpeedBoostPerc = ( !pMoveData->m_bIsSprinting && !player->m_Local.m_bDucked ) ? 0.5f : 0.1f;
+#ifdef MOD_NTKS
+		if ( !player->m_Local.m_bDucked && player->m_Local.m_iWallsJumped )
+		{
+			flSpeedBoostPerc = sv_walljump_forward_boost_percent.GetFloat();
+			for ( int i = player->m_Local.m_iWallsJumped; i != 0; --i ) {
+				flSpeedBoostPerc *= sv_walljump_strength_reduction_factor.GetFloat();
+			}
+		}
+#endif
 		float flSpeedAddition = fabs( mv->m_flForwardMove * flSpeedBoostPerc );
 		float flMaxSpeed = mv->m_flMaxSpeed + ( mv->m_flMaxSpeed * flSpeedBoostPerc );
 		float flNewSpeed = ( flSpeedAddition + mv->m_vecVelocity.Length2D() );
@@ -2687,6 +3080,15 @@ int CGameMovement::TryPlayerMove( Vector *pFirstDest, trace_t *pFirstTrace )
 		{
 			blocked |= 1;		// floor
 		}
+#ifdef MOD_NTKS
+		// this is recorded for the walljump, so let's only check for collision with suitable walls
+		else if (pm.plane.normal.z <= 0.6f)
+		{
+			m_vecDirectionBeforeCollision = mv->m_vecVelocity;
+			m_vecDirectionBeforeCollision.NormalizeInPlace();
+		}
+		//TODO: do walljump logic here?
+#endif
 		// If the plane has a zero z component in the normal, then it's a 
 		//  step or wall
 		if (!pm.plane.normal[2])
@@ -3604,6 +4006,13 @@ void CGameMovement::SetGroundEntity( trace_t *pm )
 		// Subtract ground velocity at instant we hit ground jumping
 		vecBaseVelocity -= newGround->GetAbsVelocity(); 
 		vecBaseVelocity.z = newGround->GetAbsVelocity().z;
+#ifdef MOD_NTKS
+		// reset CrouchSlideTime after having fallen
+		if ( ( player->m_Local.m_flCrouchSlideTime || player->m_Local.m_bDucking || player->m_Local.m_bDucked ) && player->GetAbsVelocity().LengthSqr() > Sqr( sv_crouch_slide_speed_threshold.GetFloat() ) )
+		{
+			player->m_Local.m_flCrouchSlideTime = gpGlobals->curtime + GAMEMOVEMENT_CROUCH_SLIDE_TIME;
+		}
+#endif
 	}
 	else if ( oldGround && !newGround )
 	{
@@ -3619,6 +4028,10 @@ void CGameMovement::SetGroundEntity( trace_t *pm )
 
 	if ( newGround )
 	{
+#ifdef MOD_NTKS
+		if ( IsCrouchSliding() )
+			player->PlayCrouchSlideSound( MoveHelper()->GetSurfaceProps()->GetSurfaceData( pm->surface.surfaceProps ) );
+#endif
 		CategorizeGroundSurface( *pm );
 
 		// Then we are not in water jump sequence
@@ -3629,9 +4042,43 @@ void CGameMovement::SetGroundEntity( trace_t *pm )
 		{
 			MoveHelper()->AddToTouched( *pm, mv->m_vecVelocity );
 		}
+#ifdef MOD_NTKS
+		else
+		{
+			player->m_Local.m_iWallsJumped = 0;
+			m_vecDirectionBeforeCollision = vec3_origin;
+		}
+	
+		// cancel crouch slide if the new surface is steeper
+		if ( IsCrouchSliding() )
+		{
+#if 0
+			Vector horMoveDir = player->GetAbsVelocity();
+			horMoveDir.z = 0.0f;
+			VectorNormalize( horMoveDir );
+			float oldSteep = DotProduct( horMoveDir, player->m_Local.m_vecGroundPlaneNormal );
+			float newSteep = DotProduct( horMoveDir, pm->plane.normal );
+			if ( newSteep <= oldSteep )
+#else
+			if ( newGround != oldGround && !CrouchSlideSpeedReached( player->GetAbsVelocity(), pm->plane.normal, CROUCH_SLIDE_THRESHOLD_FACTOR ) )
+#endif
+			{
+				// cancel crouch slide
+				player->m_Local.m_flCrouchSlideTime = 0.0f;
+				player->PlayCrouchSlideSound( NULL );
+			}
+		}
+#endif
 
 		mv->m_vecVelocity.z = 0.0f;
 	}
+#ifdef MOD_NTKS
+	else
+	{
+		player->m_Local.m_vecGroundPlaneNormal = vec3_origin;
+		player->PlayCrouchSlideSound( NULL );
+	}
+#endif
 }
 
 //-----------------------------------------------------------------------------
@@ -4057,6 +4504,13 @@ void CGameMovement::FixPlayerCrouchStuck( bool upward )
 
 bool CGameMovement::CanUnduck()
 {
+#ifdef MOD_NTKS
+	if ( IsCrouchSliding() && player->GetAbsVelocity().LengthSqr() >= Sqr( sv_crouch_slide_speed_cancel.GetFloat() ))
+	{
+		return false;
+	}
+#endif
+
 	int i;
 	trace_t trace;
 	Vector newOrigin;
@@ -4126,6 +4580,10 @@ void CGameMovement::FinishUnDuck( void )
 	player->m_Local.m_bInDuckJump  = false;
 	player->SetViewOffset( GetPlayerViewOffset( false ) );
 	player->m_Local.m_flDucktime = 0;
+#ifdef MOD_NTKS
+	player->m_Local.m_flCrouchSlideTime = 0.0f;
+	player->PlayCrouchSlideSound( NULL );
+#endif
 
 	mv->SetAbsOrigin( newOrigin );
 
@@ -4190,6 +4648,9 @@ void CGameMovement::FinishUnDuckJump( trace_t &trace )
 	player->m_Local.m_flDucktime = 0.0f;
 	player->m_Local.m_flDuckJumpTime = 0.0f;
 	player->m_Local.m_flJumpTime = 0.0f;
+#ifdef MOD_NTKS
+	player->PlayCrouchSlideSound( NULL );
+#endif
 
 	Vector vecViewOffset = GetPlayerViewOffset( false );
 	vecViewOffset.z -= flDeltaZ;
@@ -4323,6 +4784,11 @@ void CGameMovement::HandleDuckingSpeedCrop( void )
 //-----------------------------------------------------------------------------
 bool CGameMovement::CanUnDuckJump( trace_t &trace )
 {
+#ifdef MOD_NTKS
+	if ( IsCrouchSliding() )
+		return false;
+#endif
+
 	// Trace down to the stand position and see if we can stand.
 	Vector vecEnd( mv->GetAbsOrigin() );
 	vecEnd.z -= 36.0f;						// This will have to change if bounding hull change!
@@ -4373,12 +4839,37 @@ void CGameMovement::Duck( void )
 	if ( IsDead() )
 		return;
 
+#ifdef MOD_NTKS
+	if ( !( m_iSpeedCropped & SPEED_CROPPED_DUCK ) && player->m_Local.m_flCrouchSlideTime && ( player->GetGroundEntity() != NULL ) )
+	{
+		if ( !IsCrouchSliding() || player->GetAbsVelocity().LengthSqr() < Sqr( sv_crouch_slide_speed_cancel.GetFloat() ) )
+		{
+			player->m_Local.m_flCrouchSlideTime = 0.0f;
+			player->PlayCrouchSlideSound( NULL );
+		}
+		else
+		{
+			mv->m_flForwardMove *= 0.1f;
+			mv->m_flSideMove    *= 0.25f;
+			mv->m_flUpMove      *= 0.25f;
+			m_iSpeedCropped |= SPEED_CROPPED_DUCK;
+		}
+	}
+#endif
 	// Slow down ducked players.
 	HandleDuckingSpeedCrop();
 
 	// If the player is holding down the duck button, the player is in duck transition, ducking, or duck-jumping.
 	if ( ( mv->m_nButtons & IN_DUCK ) || player->m_Local.m_bDucking  || bInDuck || bDuckJump )
 	{
+#ifdef MOD_NTKS
+		// cancel crouch slide if duck was released and pressed again
+		if ( ( mv->m_nButtons & IN_DUCK ) && ( buttonsChanged & IN_DUCK ) )
+		{
+			player->m_Local.m_flCrouchSlideTime = 0.0f;
+			player->PlayCrouchSlideSound( NULL );
+		}
+#endif
 		// DUCK
 		if ( ( mv->m_nButtons & IN_DUCK ) || bDuckJump )
 		{
@@ -4394,12 +4885,33 @@ void CGameMovement::Duck( void )
 				}
 			}
 #endif
+#ifdef MOD_NTKS
+			if ( !bInDuck && !player->m_Local.m_flCrouchSlideTime && CrouchSlideSpeedReached( player, CROUCH_SLIDE_THRESHOLD_FACTOR ) )
+			{
+				player->m_Local.m_flCrouchSlideTime = gpGlobals->curtime + GAMEMOVEMENT_CROUCH_SLIDE_TIME;
+				player->PlayCrouchSlideSound( player->m_pSurfaceData );
+			}
+#endif
 			// Have the duck button pressed, but the player currently isn't in the duck position.
 			if ( ( buttonsPressed & IN_DUCK ) && !bInDuck && !bDuckJump && !bDuckJumpTime )
 			{
 				player->m_Local.m_flDucktime = GAMEMOVEMENT_DUCK_TIME;
 				player->m_Local.m_bDucking = true;
 			}
+#ifdef MOD_NTKS
+			else if ( ( buttonsPressed & IN_DUCK ) && player->m_Local.m_bDucking )
+			{
+				// Invert time if release before fully ducked!!!
+				float unduckMilliseconds = 1000.0f * TIME_TO_UNDUCK;
+				float duckMilliseconds = 1000.0f * TIME_TO_DUCK;
+				float elapsedMilliseconds = GAMEMOVEMENT_DUCK_TIME - player->m_Local.m_flDucktime;
+
+				float fracUnducked = elapsedMilliseconds / unduckMilliseconds;
+				float remainingDuckMilliseconds = fracUnducked * duckMilliseconds;
+
+				player->m_Local.m_flDucktime = GAMEMOVEMENT_DUCK_TIME - duckMilliseconds + remainingDuckMilliseconds;
+			}
+#endif
 			
 			// The player is in duck transition and not duck-jumping.
 			if ( player->m_Local.m_bDucking && !bDuckJump && !bDuckJumpTime )
@@ -4407,8 +4919,12 @@ void CGameMovement::Duck( void )
 				float flDuckMilliseconds = MAX( 0.0f, GAMEMOVEMENT_DUCK_TIME - ( float )player->m_Local.m_flDucktime );
 				float flDuckSeconds = flDuckMilliseconds * 0.001f;
 				
+#ifdef MOD_NTKS
+				if ( ( flDuckSeconds > TIME_TO_DUCK ) || bInAir )
+#else
 				// Finish in duck transition when transition time is over, in "duck", in air.
 				if ( ( flDuckSeconds > TIME_TO_DUCK ) || bInDuck || bInAir )
+#endif
 				{
 					FinishDuck();
 				}
@@ -4474,6 +4990,9 @@ void CGameMovement::Duck( void )
 			// NOTE: When not onground, you can always unduck
 			if ( player->m_Local.m_bAllowAutoMovement || bInAir || player->m_Local.m_bDucking )
 			{
+#ifdef MOD_NTKS
+				if ( !IsCrouchSliding() )
+#endif
 				// We released the duck button, we aren't in "duck" and we are not in the air - start unduck transition.
 				if ( ( buttonsReleased & IN_DUCK ) )
 				{

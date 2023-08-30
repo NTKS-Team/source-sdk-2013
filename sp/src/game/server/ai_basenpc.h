@@ -1773,6 +1773,22 @@ public:
 	void				InputChangeWeapon( inputdata_t &inputdata );
 	void				InputPickupWeapon( inputdata_t &inputdata );
 	void				InputPickupItem( inputdata_t &inputdata );
+
+	/*
+	 * Remember parameters of objects before pickup so they can be restored when dropping.
+	 * MoveType is changed to MOVETYPE_NONE and the object is made non-solid.
+	 */
+	struct CarriedObjectPreState
+	{
+		void Drop() const;
+		void Drop(const Vector &vecTarget, const QAngle &angTarget) const;
+
+		CBaseEntity	*m_pEnt;
+		int			m_iAttachment;
+		MoveType_t	m_iMovetype;
+		bool		m_bNotSolidFlag;
+	};
+	CUtlVector<CarriedObjectPreState>	m_CarriedObjects;
 #endif
 
 	// NOTE: The Shot Regulator is used to manage the RangeAttack1 weapon.

@@ -11,6 +11,10 @@
 #include "KeyValues.h"
 #include "iachievementmgr.h"
 
+#if defined GAME_DLL && defined MOD_NTKS
+#include "ntks/info_player_start.h"
+#endif
+
 #ifdef CLIENT_DLL
 
 	#include "usermessages.h"

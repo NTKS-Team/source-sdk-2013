@@ -167,6 +167,12 @@ BEGIN_RECV_TABLE_NOBASE( CPlayerLocalData, DT_Local )
 	RecvPropFloat	(RECVINFO(m_flDucktime)),
 	RecvPropFloat	(RECVINFO(m_flDuckJumpTime)),
 	RecvPropFloat	(RECVINFO(m_flJumpTime)),
+#ifdef MOD_NTKS
+	RecvPropInt		(RECVINFO(m_iWallsJumped)),
+	RecvPropTime	(RECVINFO(m_flCrouchSlideTime)),
+	RecvPropVector	(RECVINFO(m_vecGroundPlaneNormal)),
+	RecvPropTime	(RECVINFO(m_flStartStopSprintTime)),
+#endif
 	RecvPropFloat	(RECVINFO(m_flFallVelocity)),
 
 #if PREDICTION_ERROR_CHECK_LEVEL > 1 
@@ -283,6 +289,9 @@ END_RECV_TABLE()
 		RecvPropBool		( RECVINFO( m_bDrawPlayerModelExternally ) ),
 		RecvPropBool		( RECVINFO( m_bInTriggerFall ) ),
 #endif
+#ifdef MOD_NTKS
+		RecvPropInt			( RECVINFO( m_iPlayerCharacter ) ),
+#endif
 
 	END_RECV_TABLE()
 
@@ -379,6 +388,11 @@ BEGIN_PREDICTION_DATA_NO_BASE( CPlayerLocalData )
 	DEFINE_PRED_FIELD( m_flDucktime, FIELD_FLOAT, FTYPEDESC_INSENDTABLE ),
 	DEFINE_PRED_FIELD( m_flDuckJumpTime, FIELD_FLOAT, FTYPEDESC_INSENDTABLE ),
 	DEFINE_PRED_FIELD( m_flJumpTime, FIELD_FLOAT, FTYPEDESC_INSENDTABLE ),
+#ifdef MOD_NTKS
+	DEFINE_PRED_FIELD( m_iWallsJumped, FIELD_INTEGER, FTYPEDESC_INSENDTABLE ),
+	DEFINE_PRED_FIELD( m_flCrouchSlideTime, FIELD_FLOAT, FTYPEDESC_INSENDTABLE ),
+	DEFINE_PRED_FIELD( m_vecGroundPlaneNormal, FIELD_VECTOR, FTYPEDESC_INSENDTABLE ),
+#endif
 	DEFINE_PRED_FIELD_TOL( m_flFallVelocity, FIELD_FLOAT, FTYPEDESC_INSENDTABLE, 0.5f ),
 //	DEFINE_PRED_FIELD( m_nOldButtons, FIELD_INTEGER, FTYPEDESC_INSENDTABLE ),
 	DEFINE_FIELD( m_nOldButtons, FIELD_INTEGER ),
@@ -485,6 +499,11 @@ C_BasePlayer::C_BasePlayer() : m_iv_vecViewOffset( "C_BasePlayer::m_iv_vecViewOf
 	m_nForceVisionFilterFlags = 0;
 
 	ListenForGameEvent( "base_player_teleported" );
+
+#ifdef MOD_NTKS
+	m_sndCrouchSlide = NULL;
+	m_sCrouchSlideSoundName = 0;
+#endif
 }
 
 //-----------------------------------------------------------------------------
